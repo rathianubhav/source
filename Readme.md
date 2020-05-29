@@ -110,7 +110,7 @@ println("a ", a);
 ```
 
 
-### if execution for file then need to have a main function
+### if execution from file then need to have a main function
 
 ```
 let main := func args {
