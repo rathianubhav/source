@@ -1,0 +1,13 @@
+let main := func args {
+	
+	for i in range 10 {
+		println("i is : ", i);
+	}
+		
+	let j := 20;
+	
+	for j in range 25 {
+		println("j is : ", j);
+	}
+	
+}; 

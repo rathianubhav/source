@@ -1,0 +1,18 @@
+	
+let main := func args {
+	let c := cont {
+		a : 5,
+		b : true,
+		c : "hello World",
+		d : func num {
+			ret := num + 10;
+			},
+			
+		e : func x {
+			println(c->d(x));
+			ret := x * 2;
+			}
+	};
+	
+	println(c->e(5));
+};

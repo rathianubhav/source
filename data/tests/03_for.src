@@ -1,0 +1,7 @@
+let main := func args {
+	let i := 0;
+	
+	for i <= 10 {
+		println "i is :", i;
+	}
+};

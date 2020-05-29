@@ -1,0 +1,84 @@
+%{
+
+#include <iostream>
+#include <cstdlib>
+using namespace std;
+#include "../include/value"
+#include "../include/ast"
+#include "source.tab.hpp"
+
+void scanerr() {
+    if (!error) {
+        cerr << "err: unrecognized token starting with '" << yytext << "'" << endl;
+        cerr << "code: " << (int) yytext << endl;
+        error = true;
+    }
+}
+
+Oper get_comp_op(const char* text) {
+    switch(text[0]) {
+        case '=': return EQ;
+        case '!': return NE;
+        case '>': return (text[1] == '=' ? GE : GT);
+        case '<': return (text[1] == '=' ? LE : LT);
+        default : exit(8); 
+    }
+}
+
+char* quote_strip(char* str) {
+    char* toret = str;
+    while(toret[0] == '"') ++toret;
+    for(int i = 0; toret[i] != '\0'; ++i) {
+        if (toret[i] == '"') toret[i] = '\0';
+    }
+
+    return toret;
+}
+
+%}
+
+%option noyywrap
+%option nounput
+%option yylineno
+
+%%
+
+[0-9]+              { yylval.exp = new Int((long)atoi(yytext));   return INT;}
+([0-9]*[.])?[0-9]   { yylval.exp = new Float((double)atof(yytext)); return FLOAT;}
+true|false          { yylval.exp = new Bool(yytext[0] == 't'); return BOOL;}
+[+-]                { yylval.op  = (yytext[0] == '+' ? ADD : SUB); return OPA;}
+[*/]                { yylval.op  = (yytext[0] == '*' ? MUL : DIV); return OPM;}
+and|or              { yylval.op  = (yytext[0] == 'a' ? AND : OR); return BOP;}
+not                 { yylval.op  = NOT; return NOTTOK;}
+":="                { return ASN;    }
+"->"                { return FROM; }
+":"                 { return COLON; }
+"("                 { return LP;}
+")"                 { return RP;}
+"{"                 { return LC;}
+"}"                 { return RC;}
+";"                 { return STOP;}
+","                 { return COMA;}
+[><=]|([><!=]=)     { yylval.op = get_comp_op(yytext); return COMP;}
+if                  { return IF;}
+in                  { return IN;}
+range               { return RANGE;}
+else                { return ELSE;}
+for                 { return FOR;}
+read                { return READ;}
+print               { return PRINT;}
+println             { return PRINTLN;}
+use                 { return USE;}
+exit                { return EXIT;}
+func                { return FUNC;}
+cont                { return CONT;}
+let                 { return LET;}
+[a-zA-Z0-9_]+       { yylval.id = new Id(yytext); return ID;}
+["][^"]*["]         { yylval.exp = new String(quote_strip(yytext)); return STRING;}
+<<EOF>>             { return 0;}
+[ \t\n]+            {}
+"/*"((\*+[^/*])|([^*]))*\**"*/" {}
+"//".*              {}
+.                   { scanerr(); return -1;}
+
+%%

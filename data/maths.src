@@ -1,0 +1,30 @@
+/* Value of PI */
+let PI := 3.14159;
+
+let supportedos := "unix";
+
+if os != supportedos {
+    print "not support for ";
+    println os;
+}
+
+let exec_m_func := func funcname, rettype, arg {
+    let handler := dlopen("/lib/libm.so.6");
+    let funcptr := dlsym(handler, funcname);
+    ret := dlexec(funcptr, rettype, arg);
+
+    println "handler: ", handler, " funcptr: ", funcptr, " ret: ", ret;
+
+    dlclose(handler);
+};
+
+let cos := func val {
+    ret := exec_m_func("cos","num", val);
+};
+
+let atan2 := func val1, val2 {
+    let handler := dlopen("/lib/libm.so.6");
+    let funcptr := dlsym(handler, "atan2");
+    ret := dlexec_2(funcptr, "num", val1, val2);
+    dlclose(handler);
+};

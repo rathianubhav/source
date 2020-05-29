@@ -1,0 +1,23 @@
+let main := func args {
+	
+	let c := cont {
+		a : 10,
+		b : 10.5,
+		x : true,
+		d : "hello World",
+		
+		e : func a1, a2 {
+			ret := a1 + a2;
+			}
+	};
+	
+	println("c is ",c);
+	
+	println("c -> a ", c->a);
+	println("c -> b ", c->b);
+	println("c -> x ", c->x);
+	println("c -> d ", c->d);
+	println("c -> e(2+5) ", c->e(2,5));
+	println("c -> f ", c->f);
+	println("a ", a);
+};

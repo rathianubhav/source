@@ -1,0 +1,10 @@
+let sample_func := func a1, var, another {
+
+    println(a1, " ", var, " ", another);
+
+    ret := 5 + 2;
+};
+
+let main := func args {
+    println("output is ",sample_func(5, true, "hello"));
+};

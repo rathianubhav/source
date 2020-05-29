@@ -1,0 +1,4 @@
+let main := func args {
+	let x := 10 - 5;
+	println(x);
+};

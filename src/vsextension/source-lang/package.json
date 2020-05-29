@@ -1,0 +1,25 @@
+{
+    "name": "source-lang",
+    "displayName": "source-lang",
+    "description": "Source Language Extension",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.45.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "source",
+            "aliases": ["source", "source"],
+            "extensions": [".src"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "source",
+            "scopeName": "source.src",
+            "path": "./syntaxes/source.tmLanguage.json"
+        }]
+    }
+}

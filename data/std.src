@@ -1,0 +1,38 @@
+let libc := "/lib/libc.so.6";
+let std := cont {
+    libc : "/lib/libc.so.6",
+
+    exec_c_func : func funcname, rettype, arg {
+        let handler := dlopen(libc);
+        let funcptr := dlsym(handler, funcname);
+        ret := dlexec_1(funcptr, rettype, arg);
+
+        println "handler: ", handler, " funcptr: ", funcptr, " ret: ", ret;
+        dlclose(handler);
+    },
+
+    
+};
+let supportedos := "unix";
+
+if os != supportedos {
+    print "not support for ";
+    println os;
+}
+
+let exec_c_func := func funcname, rettype, arg {
+    let handler := dlopen(libc);
+    let funcptr := dlsym(handler, funcname);
+    ret := dlexec_1(funcptr, rettype, arg);
+
+    println "handler: ", handler, " funcptr: ", funcptr, " ret: ", ret;
+    dlclose(handler);
+};
+
+let sleep := func time {
+    ret := exec_c_func("sleep","num",time);
+};
+
+let rand := func lim {
+    ret := exec_c_func("rand","num",lim);
+};

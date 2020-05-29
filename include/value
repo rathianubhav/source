@@ -1,0 +1,153 @@
+#ifndef __VALUE__
+#define __VALUE__
+
+#include <iostream>
+#include <cstdlib>
+#include <vector>
+#include <cstring>
+
+using namespace std;
+
+class Stmt;
+class Frame;
+class Id;
+class Exp;
+
+class FuncDef {
+    public:
+        virtual vector<Id*> get_args() = 0;
+        virtual Stmt* get_body() = 0;
+};
+
+
+struct Closure {
+    FuncDef* func;
+    Frame* env;
+};
+
+
+enum ValueType {
+    FLOAT_T, INT_T, BOOL_T, STR_T, FUNC_T, ANY_T, NONE_T, DICT_T
+};
+
+
+typedef pair<Id*, Exp*> dict;
+
+class Value {
+
+    private:
+        union {
+            double floatval;
+            long intval;
+            bool tf;
+            char* str;
+            void* any;
+            vector<dict*> *dictval;
+            Closure func;
+        } val;
+
+        ValueType type;
+
+    public:
+        explicit Value() {type = NONE_T;}
+
+        explicit Value(double n) {
+            type = FLOAT_T;
+            val.floatval = n;
+        }
+
+        explicit Value(long n) {
+            type = INT_T;
+            val.intval = n;
+        }
+
+        explicit Value(bool b) {
+            type = BOOL_T;
+            val.tf = b;
+        }
+
+        explicit Value(char* s) {
+            type = STR_T;
+            val.str = s;
+        }
+
+        explicit Value(void* ptr) {
+            type = ANY_T;
+            val.any = ptr;
+        }
+
+        explicit Value(vector<dict*> *d) {
+            type = DICT_T;
+            val.dictval = d;
+        }
+        explicit Value(FuncDef* func, Frame *env) {
+            type = FUNC_T;
+            val.func.func = func;
+            val.func.env = env; 
+        }
+
+
+        ValueType get_type() { return type; }
+
+        void set_type(ValueType t) { type = t; }
+
+        double floatval() { return val.floatval; }
+        long  intval() { return val.intval;} 
+
+        vector<dict*>* dictval() { return val.dictval;}
+        bool tf() { return val.tf; }
+
+        char* str() { return val.str;}
+
+        void* any() { return val.any;}
+
+
+
+        Closure func() { return val.func; }
+
+
+        void repr(ostream &out) {
+            switch(type) {
+                case FLOAT_T:  out << val.floatval;           break;
+                case INT_T:  out << val.intval;        break;
+                case BOOL_T: out << (val.tf ? "true" : "false"); break;
+                case STR_T:  out << val.str;             break;
+                case ANY_T:  out << "any - " << val.any; break;
+                case FUNC_T: out << "clouser";           break;
+                case DICT_T: out << "dict"; break;
+                case NONE_T: out << "UNSET";             break;
+            }
+        }
+
+        bool operator== (const Value &other) {
+            if (type != other.type) return false;
+            switch(type) {
+                case FLOAT_T:  return val.floatval == other.val.floatval;
+                case INT_T:  return val.intval == other.val.intval;
+                case BOOL_T: return val.tf  == other.val.tf;
+                case ANY_T:  return val.any == other.val.any;
+                case STR_T:  return (bool) ! strcmp(val.str,other.val.str);
+                case FUNC_T: return val.func.func == other.val.func.func
+                           && val.func.env  == other.val.func.env;
+                case NONE_T: return true;
+            }
+            return false;
+        }
+
+        bool operator> (const Value&other) {
+            if (type != other.type) return false;
+            switch(type) {
+                case FLOAT_T:  return val.floatval > other.val.floatval;
+                case INT_T:  return val.intval > other.val.intval;
+                case BOOL_T: return val.tf > other.val.tf;
+                case ANY_T:  return sizeof(val.any) > sizeof(other.val.any);
+                case STR_T:  return strlen(val.str) > strlen(other.val.str);
+                case FUNC_T: return val.func.func == other.val.func.func
+                           && val.func.env  == other.val.func.env;
+                case NONE_T: return true;
+            }
+            return false;
+        }
+};
+
+#endif

@@ -1,0 +1,78 @@
+#ifndef __FRAME__
+#define __FRAME__
+
+#include <iostream>
+#include <map>
+#include <string>
+
+using namespace std;
+
+#include "value"
+
+extern bool error;
+
+class Frame {
+
+    private:
+        map<string, Value> bindings;
+        Frame* parent;
+
+        Frame* find(string name) {
+            Frame* cur = this;
+            while(cur && cur->bindings.count(name) == 0) {
+                cur = cur->parent;
+            }
+            return cur;
+        }
+    public:
+        Frame(Frame* par) {
+            parent = par;
+        }
+
+        virtual ~Frame() {
+            bindings.clear();
+        }
+
+        Value lookup(string name) {
+            Frame* found = find(name);
+            if (found) return found->bindings[name];
+            else {
+                if (!error) {
+                    error = true;
+                    cout << "err: no binding for variable '" << name << "'" << endl;
+                }
+
+                return Value();
+            }
+        }
+
+        bool exist(string name) {
+            Frame* found = find(name);
+            if (found) {
+                return true;
+            }
+            return false;
+        }
+        void bind(string name, Value val = Value()) {
+            if (bindings.count(name) == 0) bindings[name] = val;
+            else {
+                if (!error) {
+                    error = true;
+                    cout << "err: var '" << name << "' already bound!" << endl;
+                }
+            }
+        }
+
+        void rebind(string name, Value val) {
+            Frame* found = find(name);
+            if (found) found->bindings[name] = val;
+            else {
+                if (!error) {
+                    error = true;
+                    cout << "err: can't rebind " << name << endl;
+                }
+            }
+        }
+};
+
+#endif

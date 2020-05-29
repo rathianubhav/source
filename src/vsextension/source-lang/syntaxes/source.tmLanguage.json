@@ -1,0 +1,71 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "source",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#let"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#reserved"
+		},
+		{
+			"include": "#inbuilts"
+		},
+		{
+			"include": "#numbers"
+		},
+		{
+			"include": "#comments"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.source",
+				"match": "\\b(if|for|ret|func)\\b"
+			}]
+		},
+		"let" : {
+			"patterns": [
+				{
+					"name": "keyword.operator.new",
+					"match": "\\b(let)\\b"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.source",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.source",
+					"match": "\\\\."
+				}
+			]
+		},
+		"reserved" : {
+			"name" : "keyword.other",
+			"match": "\\b(range|ret|exit)\\b"
+		},
+		"inbuilts" : {
+			"name": "entity.name.function",
+			"match": "\\b(println|print|dlopen|dlexec|dlsym)\\b"
+		},
+		"numbers": {
+			"name":"constant.numeric",
+			"match": "[0-9.]+"
+		},
+		"comments" :{
+			"name" : "comment.block",
+			"match": "\/\\*(\\*(?!\/)|[^*])*\\*\/"
+		}
+	},
+	"scopeName": "source.src"
+}

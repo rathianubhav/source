@@ -1,0 +1,10 @@
+let main := func args {
+	let i := 5;
+	
+	if i > 1 { 
+		println "i is greater than 5"; 
+	}
+	if i == 5 { 
+		println "i is equal to 5"; 
+	}
+};

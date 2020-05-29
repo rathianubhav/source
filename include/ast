@@ -1,0 +1,441 @@
+#ifndef __AST__
+#define __AST__
+
+#include <cstdlib>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <vector>
+
+using namespace std;
+
+#include "value"
+#include "frame"
+
+extern bool error;
+extern bool showPrompt;
+
+enum Oper {
+    ADD, SUB,
+    MUL, DIV,
+    LT, GT, LE, GE,
+    EQ, NE,
+    AND, OR, NOT
+};
+
+class AST {
+    private:
+        void add_to_dot(ostream& out, int& next_node);
+
+    protected:
+
+        vector<AST*> child;
+        void add(AST* c);
+
+    public:
+        string node_label;
+        AST() { node_label = "Source Root"; }
+
+        void write_dot(const string& fname);
+        virtual ~AST() {
+            for (auto c : child) delete c;
+            child.clear();
+        }
+
+};
+
+class Exp : public AST {
+    public:
+        virtual Value eval(Frame* st) = 0;
+};
+
+class Id : public Exp {
+    private:
+        string val;
+    
+    public:
+        Id(const char* v) : val(v) {
+            node_label = "(Expr) ID = " + val;
+        }
+        Id(string b) : val(b) {}
+        string& get()                  { return val;}
+        Value eval(Frame* st) override { return st->lookup(val); };
+};
+
+class Float : public Exp {
+    private:
+        double val;
+
+    public:
+        Float(double v) : val(v) {
+            node_label = "(Expr) Float = " + to_string(val);
+        }
+
+        Value eval(Frame *st) override { return Value(val); };
+};
+
+class Int : public Exp {
+     private:
+        long val;
+
+    public:
+        Int(long v) : val(v) {
+            node_label = "(Expr) Integer = " + to_string(val);
+        }
+
+        Value eval(Frame *st) override { return Value(val); };
+};
+
+class String : public Exp {
+    private:
+        string val;
+
+    public:
+        String(char* s) : val(s) {
+            node_label = "(Expr) String = '" + val + "'";
+        }
+        Value eval(Frame *st) override { return Value((char*)val.c_str()); };
+};
+
+
+class Bool : public Exp {
+    private:
+        bool val;
+    public:
+        Bool(bool v) : val(v) {
+            node_label = "(Expr) Bool = ";
+            if (val) node_label += "true";
+            else node_label += "false";
+        }
+        Value eval(Frame* st) override { return Value(val);};
+};
+
+
+class Binary : public Exp {
+    private:
+        Oper op;
+        Exp* left;
+        Exp* right;
+    
+    public:
+        Binary(Exp* l, Oper o, Exp* r) : op(o), left(l), right(r) {
+            node_label = "(Expr) BinaryOper = " + to_string(op);
+            add(left);
+            add(right);
+        }
+        Value eval(Frame* st) override;
+};
+
+
+class Compare : public Exp {
+    private:
+        Oper op;
+        Exp* left;
+        Exp* right;
+
+    public:
+        Compare(Exp* l, Oper o, Exp* r) : op(o), left(l), right(r) {
+            node_label = "(Expr) Compare " + to_string(op);
+            add(left);
+            add(right);
+        }
+
+        Value eval(Frame* st) override;
+};
+
+class Boolean : public Exp {
+    private:
+        Exp* left;
+        Oper op;
+        Exp* right;
+
+    public:
+        Boolean(Exp* l, Oper o, Exp* r) :
+            left(l), op(o), right(r) {
+                node_label = "(Expr) Boolean " + to_string(op);
+            }
+
+        Value eval(Frame *st) override;
+};
+
+class Negation : public Exp {
+    private:
+        Exp* right;
+    
+    public:
+        Negation(Exp* r) : right(r) { 
+            node_label = "(Expr) Negation";
+            add(right); 
+        }
+
+        Value eval(Frame *st) override {  
+            auto rv = right->eval(st);
+            if (rv.get_type() == INT_T) {
+                return Value( - rv.intval());
+            } else if (rv.get_type() == FLOAT_T) {
+                return Value( - rv.floatval());
+            } else {
+                if (!error) {
+                    cout << "arthmetic err: negation of none number value is not allowed" << endl;
+                    error = true;
+                }
+                return Value();
+            } 
+        }
+};
+
+class NotOper : public Exp {
+    Exp* right;
+    
+    public:
+        NotOper(Exp* r) : right(r) { 
+            node_label = "(Expr) Not";
+            add(right); 
+        }
+        Value eval(Frame* st) override { 
+            auto rv = right->eval(st);
+            if (rv.get_type() == INT_T) {
+                return Value(! rv.intval());
+            } else if (rv.get_type() == FLOAT_T) {
+                return Value(! rv.floatval());
+            } else if (rv.get_type() == BOOL_T) {
+                return Value(! rv.tf());
+            } else {
+                if (!error) {
+                    cout << "operational err: not operation for not number, boolean is not allowed" << endl;
+                    error = true;
+                }
+                return Value();
+            }
+        }
+
+};
+
+class Read : public Exp {
+    public:
+        Read() {
+            node_label = "(Expr) Read";
+        }
+        Value eval(Frame* st) override ;
+};
+
+class Stmt : public AST {
+    private:
+        Stmt* next = nullptr;
+
+    public:
+        Stmt() {}
+
+        Stmt* get_next() { return next; }
+        void set_next(Stmt* next_stmt);
+        virtual void exec(Frame *st) = 0;
+};
+
+class NullStmt : public Stmt {
+    public:
+        NullStmt() {
+            node_label = "(Stmt) Null";
+        }
+        void exec(Frame* st) override {}
+};
+
+class Block : public Stmt {
+    private:
+        Stmt* body;
+
+    public:
+        Block(Stmt* b) : body(b) { 
+            node_label = "(Stmt) Block";
+            add(body); 
+        }
+
+        void exec(Frame *st) override ;
+};
+
+class IfStmt : public Stmt {
+    private:
+        Exp* clause;
+        Stmt* ifblock;
+        Stmt* elseblock;
+
+    public:
+        IfStmt(Exp* e, Stmt* ib, Stmt* eb) :
+        clause(e), ifblock(ib), elseblock(eb) 
+        { node_label = "(Stmt) If"; add(clause); add(ifblock); add(elseblock); }
+
+        void exec(Frame* st) override;
+};
+
+
+enum FORTYPE {
+    COND_T,
+    RANGE_T,
+};
+class ForStmt : public Stmt {
+    private:
+        Exp* clause;
+        Stmt* body;
+        Id* id;
+        FORTYPE type;
+        
+    public:
+        ForStmt(Exp* c, Stmt* b) :
+        clause(c), body(b) 
+        { node_label = "(Stmt) For"; add(clause); add(body); type = COND_T;}
+
+        ForStmt(Id* i, Exp* c, Stmt* b) : 
+        id(i), clause(c), body(b) 
+        { add(id); add(body);  type = RANGE_T;}
+
+        void exec(Frame* st) override;
+};
+
+class LetStmt : public Stmt {
+    private:
+        Id* lhs;
+        Exp* rhs;
+
+    public:
+        LetStmt(Id* l, Exp* r) : lhs(l), rhs(r) 
+        { node_label = "(Stmt) Let = " + lhs->get(); add(lhs); add(rhs); }
+
+        void exec(Frame* st) override;
+};
+
+class Assign : public Stmt {
+    private:
+        Id* lhs;
+        Exp* rhs;
+
+    public:
+        Assign(Id* l, Exp* r) : lhs(l), rhs(r) 
+        { node_label = "(Stmt) Assign = " + lhs->get(); add(lhs); add(rhs); }
+
+        void exec(Frame* st) override;
+};
+
+class Print : public Stmt {
+    private:
+        vector<Exp*> &val;
+
+    public:
+        Print(vector<Exp*> *v) : val(*v) { node_label = "(Stmt) Print"; for(auto a : val) add(a); }
+        void exec(Frame* st) override;
+};
+
+
+class PrintLn : public Stmt {
+    private:
+        vector<Exp*> &val;
+
+    public:
+        PrintLn(vector<Exp*> *v) : val(*v) { node_label = "(Stmt) Println"; for(auto a : val) add(a); }
+        void exec(Frame* st) override;
+};
+
+class UseStmt : public Stmt {
+    string module_name;
+    Stmt* sub_module;
+    public:
+        UseStmt(Id* id) : module_name(id->get()) {node_label = "(Stmt) Use = " + id->get(); add(id);}
+
+        void exec(Frame *st) override;
+};
+
+class ExitStmt: public Stmt {
+    double exit_code;
+    public:
+        ExitStmt() {node_label = "Stmt:Exit";}
+        void exec(Frame *st) override {
+            extern Stmt* tree;
+            tree = nullptr;
+        }
+};
+
+class ExpStmt : public Stmt {
+    private:
+        Exp* body;
+    
+    public:
+        ExpStmt(Exp* b) : body(b) { 
+            node_label = "Stmt:ExpStmt";
+            add(body); 
+        }
+
+        void exec(Frame* st) override;
+};
+
+class Func : public Exp, public FuncDef {
+    private:
+        vector<Id*> &args;
+        Stmt* body;
+
+    public:
+        Func(vector<Id*>* a, Stmt* b) : 
+        args(*a), body(b) 
+        {
+            node_label = "Expr:Func";
+            for (auto a: args) add(a);
+            add(body); 
+        }
+
+        vector<Id*> get_args() { return args;}
+        Stmt* get_body()  { return body;}
+
+        Value eval(Frame* st) override { return Value(this, st); }
+};
+
+class Cont : public Exp {
+    private:
+        vector<dict*> *values;
+
+    public:
+        Cont(vector<dict*> *values) : 
+            values(values)
+        {
+            node_label = "container";
+        }
+
+        Value eval(Frame* st) override { return Value(values);}      
+};
+
+class ContEval : public Exp {
+    private:
+        Id *cont, *var;
+    public:
+        ContEval(Id* cont, Id* var) : cont(cont), var(var) {
+            add(cont);
+            add(var);
+            node_label = "container->eval";
+        }
+
+        Value eval(Frame* st) override { 
+            auto d =  st->lookup(cont->get()).dictval();
+            for(auto i = d->begin(); i != d->end(); i++) {
+                auto x = *i;
+                if (x->first->get() == var->get()) {
+                    return x->second->eval(st);
+                }
+            }
+            return Value();
+        }
+};
+class FunCall : public Exp {
+
+    private:
+        Exp* fun;
+        vector<Exp*> &args;
+
+    public:
+        FunCall(Exp* f, vector<Exp*>* a) :
+        fun(f), args(*a) 
+        {
+            node_label = "Expr:FunCall";
+            add(fun);
+            for(auto a : args) add(a);
+        }
+
+        Value eval(Frame* st) override;
+};
+
+#endif

@@ -1,0 +1,243 @@
+#ifndef __BUILTINS__
+#define __BUILTINS__
+
+#include <cmath>
+#include <random>
+#include <ctime>
+#include <unistd.h>
+#include <dlfcn.h>
+#include <boost/variant.hpp>
+#include <utility>
+#include <tuple>
+#include <array>
+#include "ast"
+
+
+class InBuilt : public FuncDef, public Stmt {
+    protected:
+        vector<Id*> args;
+        string binding_name;
+
+    public:
+        string get_name() { return binding_name;}
+        Stmt* get_body() override { return this;}
+        vector<Id*> get_args() override { return args;}
+
+        void exec(Frame* st) override {
+            vector<Value> in_args;
+            for (auto a : args) {
+                in_args.push_back(st->lookup(a->get()));
+            }
+            Value result = run(in_args);
+            st->rebind("ret", result);
+        }
+        void set_args_count(int count) {
+            for(int i = 1; i <= count; i++) {
+                auto nID = new Id("args_" + to_string(i));
+                args.push_back(nID);
+            }
+        }
+
+        virtual Value run(vector<Value> in_args) = 0;
+
+};
+
+
+
+class Dlopen : public InBuilt {
+    void* handler;
+    public:
+        Dlopen() {
+            binding_name = "dlopen";
+            set_args_count(1);
+        }
+
+        Value run(vector<Value> in_args) {
+            handler = dlopen(in_args.at(0).str(), RTLD_LAZY);
+            if (handler == NULL) {
+                cout << "err: while loading library" << endl;
+                cout << dlerror() << endl;
+                return Value();
+            }
+
+            return Value(handler);
+        }
+};
+
+class Dlsym : public InBuilt {
+    void* (*func)(...);
+
+    public:
+        Dlsym() {
+            binding_name = "dlsym";
+            set_args_count(2);
+        }
+
+        Value run(vector<Value> in_args) {
+            func = (void*(*)(...)) dlsym(in_args.at(0).any(),in_args.at(1).str());
+            if (func == NULL) {
+                cout << "err: while loading function" << endl;
+                cout << dlerror() << endl;
+                return Value();
+            }
+            return Value((void*) func);
+        } 
+};
+
+
+class Dlexec : public InBuilt {
+
+    double (*dfunc)(...);
+    char* (*cfunc)(...);
+    void* (*vfunc)(...);
+    int args_size;
+    vector<boost::variant<double,long, char*, void*>> args;
+
+    public:
+        Dlexec(int args_size) {
+            binding_name = "dlexec_" + to_string(args_size);
+            set_args_count(args_size + 2);
+            this->args_size = args_size;
+        }
+
+        Value run(vector<Value> in_args) {
+            
+            cout << "args size: " << in_args.size() << endl;
+            for(auto arg : in_args) {
+                switch (arg.get_type()) {
+                    case FLOAT_T: args.push_back(arg.floatval());break;
+                    case INT_T:   args.push_back(arg.intval());break;
+                    case STR_T:   args.push_back((char*) arg.str()); break;
+                    case ANY_T:   args.push_back((void*) arg.any()); break;
+                    default: continue;
+                }
+            }
+
+            void* (*func)(...) = (void* (*)(...)) in_args.at(0).any();
+            if (func == NULL) {
+                if (!error) {
+                    cout << "err: null function pointer provided" << endl;
+                    error = true;
+                }
+                return Value();
+            }
+
+            string rtype = in_args.at(1).str();
+            if (rtype == "str") {
+                cfunc = (char* (*)(...)) func;
+                switch(args_size) {
+                    case 0: return Value(cfunc());
+                    case 1: return Value(cfunc(args.at(2)));
+                    case 2: return Value(cfunc(args.at(2),args.at(3)));
+                    case 3: return Value(cfunc(args.at(2),args.at(3),args.at(4)));
+                    default:
+                        if (!error) {
+                            cout << "max args execdes" << endl;
+                            error = true;
+                        }
+
+                        return Value();
+                }
+                
+            } else if (rtype == "num") {
+                dfunc = (double (*)(...)) func;
+                
+                switch(args_size) {
+                    case 0: return Value(dfunc());
+                    case 1: return Value(dfunc(args.at(2)));
+                    case 2: return Value(dfunc(args.at(2),args.at(3)));
+                    case 3: return Value(dfunc(args.at(2),args.at(3),args.at(4)));
+                    default:
+                        if (!error) {
+                            cout << "max args execdes" << endl;
+                            error = true;
+                        }
+
+                        return Value();
+                }
+            } else {
+                vfunc = (void* (*)(...)) func;
+                switch(args_size) {
+                    case 0: return Value(vfunc());
+                    case 1: return Value(vfunc(args.at(2)));
+                    case 2: return Value(vfunc(args.at(2),args.at(3)));
+                    case 3: return Value(vfunc(args.at(2),args.at(3),args.at(4)));
+                    default:
+                        if (!error) {
+                            cout << "max args execdes" << endl;
+                            error = true;
+                        }
+
+                        return Value();
+                }
+            }
+            return Value(func());
+        }
+};
+
+
+class Dlclose : public InBuilt {
+    public:
+        Dlclose() {
+            binding_name = "dlclose";
+            set_args_count(1);
+        }
+
+        Value run(vector<Value> in_args) {
+            dlclose(in_args.at(0).any());
+            return Value();
+        }
+};
+
+class IsType : public InBuilt {
+    ValueType ty;
+
+    public:
+        IsType(string val_type, ValueType t) : ty(t) {
+            binding_name = "is" + val_type;
+            set_args_count(1);
+        }
+
+        Value run(vector<Value> in_args) {
+            return Value(ty == in_args.at(0).get_type());
+        }
+};
+
+class Sleep : public InBuilt {
+    public:
+        Sleep() {
+            binding_name = "sleep";
+            set_args_count(1);
+        }
+
+        Value run(vector<Value> in_args) {
+            return Value((long)sleep(in_args.at(0).intval()));
+        }
+};
+
+class ShowVar : public InBuilt {
+    public:
+        ShowVar() {
+            binding_name = "showvar";
+            set_args_count(1);
+        }
+
+        Value run(vector<Value> in_args) {
+            Value a = in_args.at(0);
+            a.repr(cout);
+            switch(a.get_type()) {
+                case FLOAT_T:  cout << ": float"  << endl; break;
+                case INT_T:  cout << ": int" << endl; break;
+                case BOOL_T: cout << ": bool" << endl; break;
+                case STR_T:  cout << ": str"  << endl; break;
+                case FUNC_T: cout << ": func" << endl; break;
+                case NONE_T: cout << ": not set" << endl; break;
+            }
+
+            return Value();
+        }
+
+
+};
+
+#endif

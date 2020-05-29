@@ -1,0 +1,24 @@
+let main := func args {
+
+	
+	for i in range 5 {
+		println("'i' is ",i);
+	}
+	
+	let j := 8;	
+	println("starting for ",j);
+	
+	for j in range 10 {
+		println("'j' is ",j);
+	}
+	
+	let x := 0;
+	for x != 8 {
+		x := x + 1;
+		println("i am infinite ", x);
+		sleep(1);
+	}
+	
+	println("ok fine, i am bored now");
+	
+};

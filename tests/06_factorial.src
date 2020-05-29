@@ -1,0 +1,15 @@
+let fact := func num {
+	if num == 0 {
+		ret := 1;
+	} else {
+		ret := num * fact(num - 1);
+	}
+};
+
+let main := func args {
+	
+	print("enter no ");
+	let n := read;
+	
+	println("factorial of ", n, " is ", fact(n));
+};

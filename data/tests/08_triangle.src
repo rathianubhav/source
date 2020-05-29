@@ -1,0 +1,17 @@
+let main := func arg {
+	
+	let row := read;
+	println "rows are: ", row; 
+	let i := 0;
+	i := i + row;
+	for i <= row {
+		println "i: ", i;
+		for j in range i {
+			print j;
+		}
+		j := 0;
+		println "";
+		
+		i := i + 1;
+	}
+};
