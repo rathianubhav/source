@@ -226,19 +226,6 @@ class System : public InBuilt {
         }
 };
 
-class CStr : public InBuilt {
-    string value;
-
-    public:
-        CStr() {
-            binding_name = "cstr";
-            set_args_count(1);
-        }
-
-        Value run(vector<Value> in_args) {
-            return Value((char*) in_args.at(0).str());
-        }
-};
 
 class Sleep : public InBuilt {
     public:

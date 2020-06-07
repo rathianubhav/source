@@ -111,7 +111,6 @@ if_stmt
 
 for_stmt
 :   FOR expr block   {$$ = new For($2, $3);}
-|   FOR stmt STOP expr STOP stmt STOP block {$$=new For($2, $4, $6, $8);}
 |   FOR ID IN RANGE expr block {$$=new For($2, $5, $6);}
 ;
 

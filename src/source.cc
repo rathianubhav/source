@@ -3,6 +3,7 @@
 #include <vector>
 #include <unistd.h>
 
+
 #ifdef __releax__
 #include <releax>
 #endif
@@ -24,7 +25,7 @@ setup_global(Frame & g)
     vector<InBuilt*> inbuilts = {
         new ShowVar(), new Dlopen(), new Dlsym(), new Dlexec(0),new Dlexec(1), new Dlexec(2), new Dlexec(3), new Dlclose(), 
         new IsType("int",INT_T), new IsType("float", FLOAT_T), new IsType("str", STR_T), new IsType("bool", BOOL_T), new IsType("func",FUNC_T), new Sleep(),
-        new System(), new CStr()
+        new System()
     };
     for (auto a : inbuilts) {
         g.bind(a->get_name(), Value(a,nullptr));

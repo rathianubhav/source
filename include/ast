@@ -270,12 +270,11 @@ class If : public Stmt {
 enum FORTYPE {
     COND_T,
     RANGE_T,
-    C_T,
 };
 class For : public Stmt {
     private:
         Expr* clause, *check_cond;
-        Stmt *start_cond,  *incr;
+        Expr *start_cond,  *incr;
         Block* body;
         Id* id;
         FORTYPE type;
@@ -289,19 +288,6 @@ class For : public Stmt {
         id(i), clause(c), body(b) 
         { add(id); add(body);  type = RANGE_T; node_label = "(Stmt) For:range";}
 
-        For(Stmt* s, Expr* c, Stmt* i, Block* b) :
-            start_cond(s),
-            check_cond(c),
-            incr(i),
-            body(b)
-        {
-            add(start_cond);
-            add(check_cond);
-            add(incr);
-            add(body);
-            node_label = "(Stmt) For:CType";
-            type = C_T;
-        }
 
 
         void exec(Frame* st) override;

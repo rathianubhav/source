@@ -287,18 +287,12 @@ For::exec(Frame* st)
             if (!st->exist(id->get())) {
                 st->bind(id->get(), Value((long)0));
             }
-            for(int i = st->lookup(id->get()).intval(); i < clause->eval(st).intval(); i++) {
-                st->rebind(id->get(),Value((double)i));
+            for(long i = st->lookup(id->get()).intval(); i < clause->eval(st).intval(); i++) {
+                st->rebind(id->get(),Value((long)i));
                 body->exec(st);
             }
 
             break;
-        case C_T:
-            start_cond->exec(st);
-            while(check_cond->eval(st).tf()) {
-                body->exec(st);
-                incr->exec(st);
-            }
     }
     
     get_next()->exec(st);
