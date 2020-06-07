@@ -73,6 +73,17 @@ class Frame {
                 }
             }
         }
+
+        void unbind(string name) {
+            Frame* found = find(name);
+            if (found) found->bindings.erase(name);
+            else {
+                if (!error) {
+                    error = true;
+                    cout << "err[st]: not already bind '" << name << "'" << endl;
+                }
+            }
+        }
 };
 
 #endif

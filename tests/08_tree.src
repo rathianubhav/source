@@ -1,0 +1,13 @@
+let node := cont {
+	data: 5,
+	left: node,
+	right: node
+};
+
+let main := func args {
+	println("data ", node->data);
+	println("left ", node->lefta);
+	if node->lefa == null {
+		println("this is null");
+	}
+};

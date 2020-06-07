@@ -280,16 +280,22 @@ If::exec(Frame* st)
 void
 For::exec(Frame* st)
 {
+    bool already = false;
     switch(type) {
         case COND_T:    while(clause->eval(st).tf()) body->exec(st); break;
         case RANGE_T:
             
             if (!st->exist(id->get())) {
                 st->bind(id->get(), Value((long)0));
+                already = true;
             }
             for(long i = st->lookup(id->get()).intval(); i < clause->eval(st).intval(); i++) {
                 st->rebind(id->get(),Value((long)i));
                 body->exec(st);
+            }
+
+            if (already) {
+                st->unbind(id->get());
             }
 
             break;
