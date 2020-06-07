@@ -21,4 +21,9 @@ let main := func args {
 	
 	println("ok fine, i am bored now");
 	
+	println("i am a c type loop");
+	for i := 0; i >= 5; i := i + 1 {
+		println("i is ",i);
+	}
+	
 };

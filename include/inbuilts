@@ -203,6 +203,43 @@ class IsType : public InBuilt {
         }
 };
 
+class System : public InBuilt {
+    public:
+        System() {
+            binding_name = "system";
+            set_args_count(1);
+        }
+
+        Value run(vector<Value> in_args) {
+            std::array<char, 128> buffer;
+            string result;
+            unique_ptr<FILE, decltype(&pclose)> pipe(popen(in_args.at(0).str(), "r"), pclose);
+            if (!pipe) {
+                throw runtime_error("popen() failed");
+            }
+
+            while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                result += buffer.data();
+            }
+
+            return Value((char*)result.c_str());
+        }
+};
+
+class CStr : public InBuilt {
+    string value;
+
+    public:
+        CStr() {
+            binding_name = "cstr";
+            set_args_count(1);
+        }
+
+        Value run(vector<Value> in_args) {
+            return Value((char*) in_args.at(0).str());
+        }
+};
+
 class Sleep : public InBuilt {
     public:
         Sleep() {
@@ -227,11 +264,11 @@ class ShowVar : public InBuilt {
             a.repr(cout);
             switch(a.get_type()) {
                 case FLOAT_T:  cout << ": float"  << endl; break;
-                case INT_T:  cout << ": int" << endl; break;
-                case BOOL_T: cout << ": bool" << endl; break;
-                case STR_T:  cout << ": str"  << endl; break;
-                case FUNC_T: cout << ": func" << endl; break;
-                case NONE_T: cout << ": not set" << endl; break;
+                case INT_T:    cout << ": int" << endl; break;
+                case BOOL_T:   cout << ": bool" << endl; break;
+                case STR_T:    cout << ": str"  << endl; break;
+                case FUNC_T:   cout << ": func" << endl; break;
+                case NONE_T:   cout << ": not set" << endl; break;
             }
 
             return Value();

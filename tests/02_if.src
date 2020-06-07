@@ -1,9 +1,13 @@
 let main := func args {
 	let i := read;
 	
-	if i >= 10 {
+	if i > 10 {
 		println (i, " is greater than ", 10);
 	} else {
 		println (i, " is smaller than ", 10);
+	}
+	
+	if i == 10 {
+		println(i, " is equal to ", 10);
 	}
 };

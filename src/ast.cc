@@ -212,7 +212,7 @@ Stmt::set_next(Stmt* next_stmt)
 }
 
 void
-UseStmt::exec(Frame *st)
+Use::exec(Frame *st)
 {
     #ifdef __releax__
         extern FILE* yyin;
@@ -269,15 +269,16 @@ Block::exec(Frame *st)
 }
 
 void
-IfStmt::exec(Frame* st)
+If::exec(Frame* st)
 {
     if (clause->eval(st).tf()) ifblock->exec(st);
-    else elseblock->exec(st);
+    else if (elseblock != nullptr) elseblock->exec(st);
+    
     get_next()->exec(st);
 }
 
 void
-ForStmt::exec(Frame* st)
+For::exec(Frame* st)
 {
     switch(type) {
         case COND_T:    while(clause->eval(st).tf()) body->exec(st); break;
@@ -292,13 +293,19 @@ ForStmt::exec(Frame* st)
             }
 
             break;
+        case C_T:
+            start_cond->exec(st);
+            while(check_cond->eval(st).tf()) {
+                body->exec(st);
+                incr->exec(st);
+            }
     }
     
     get_next()->exec(st);
 }
 
 void
-LetStmt::exec(Frame* st)
+Let::exec(Frame* st)
 {
     st->bind(lhs->get(), rhs->eval(st));
     get_next()->exec(st);
@@ -338,7 +345,7 @@ PrintLn::exec(Frame* st)
 }
 
 void
-ExpStmt::exec(Frame* st)
+ExprStmt::exec(Frame* st)
 {
     body->eval(st);
     get_next()->exec(st);
@@ -346,10 +353,10 @@ ExpStmt::exec(Frame* st)
 
 
 Value
-FunCall::eval(Frame* st)
+Call::eval(Frame* st)
 {
 
-    Closure func = fun->eval(st).func();
+    Closure func = st->lookup(id->get()).func();
     Frame* funenv = new Frame(func.env);
     funenv->bind("ret", Value());
     auto parm_req = func.func->get_args();

@@ -17,7 +17,7 @@ let main := func args {
 	println("c -> b ", c->b);
 	println("c -> x ", c->x);
 	println("c -> d ", c->d);
-	println("c -> e(2+5) ", c->e(2,5));
 	println("c -> f ", c->f);
-	println("a ", a);
+	
+	a();
 };

@@ -36,11 +36,11 @@ int yylex_destroy();
 %union {
     Block* block;
     Stmt*  stmt;
-    Exp*   exp;
+    Expr*   expr;
     Id*    id;
     Oper   op;
     vector<Id*> *arr;
-    vector<Exp*> *arrE;
+    vector<Expr*> *arrE;
     vector<dict*> *arrDefs;
     dict* adict;
 };
@@ -52,74 +52,135 @@ int yylex_destroy();
 %left<op> OPM
 %right POSNEG
 
-%token LC RC LP RP FUNC IF ELSE FOR READ PRINT PRINTLN LET ASN STOP COMA IN RANGE USE EXIT COLON CONT FROM
+%token LC RC LP RP FUNC IF ELSE FOR READ PRINT PRINTLN LET ASSIGN STOP COMA IN RANGE USE EXIT COLON CONT FROM
 %token<id> ID
-%token<exp> INT FLOAT BOOL STRING
+%token<expr> INT FLOAT BOOL STRING
 %token<stmt> DEBUG arg
-%type<stmt> stmt stmtlist
+%type<stmt> stmt stmts 
+%type<stmt> if_stmt for_stmt print_stmt assign_stmt use_stmt block_stmt expr_stmt
 %type<block> block rawblock
-%type<exp> exp
+%type<expr> expr values container_eval 
 %type<arr> args
-%type<arrE> exps
+%type<arrE> exprs
 %type<adict> arg_def
 %type<arrDefs> arg_defs
 
 %destructor { delete $$; } <block>
 %destructor { delete $$; } <stmt>
-%destructor { delete $$; } <exp>
+%destructor { delete $$; } <expr>
 %destructor { delete $$; } <id>
 
 %%
 
-res: stmt { $1->set_next(new NullStmt); tree = $1; YYACCEPT; }
+res
+: stmt { $1->set_next(new NullStmt); tree = $1; YYACCEPT; }
 |         { }
+;
 
-stmtlist: stmt stmtlist             { $1->set_next($2); $$ = $1; }
-|                                   { $$ = new NullStmt; }
+stmts
+: stmt stmts { $1->set_next($2); $$ = $1; }
+| { $$ = new NullStmt; }
+;
 
-stmt: EXIT STOP                     {$$ = new ExitStmt(); }
-|     USE ID STOP                   {$$ = new UseStmt($2);}
-|     LET ID ASN exp STOP           {$$ = new LetStmt($2,$4);}
-|     ID ASN exp STOP               {$$ = new Assign($1,$3);}
-|     PRINT LP exps RP STOP         {$$ = new Print($3);}
-|     PRINTLN LP exps RP STOP       {$$ = new PrintLn($3);}
-|     IF exp block                  {$$ = new IfStmt($2,$3,new NullStmt);}
-|     IF exp block ELSE block       {$$ = new IfStmt($2,$3,$5);}
-|     FOR exp block                 {$$ = new ForStmt($2,$3);}
-|     FOR ID IN RANGE exp block     {$$ = new ForStmt($2, $5, $6);}
-|     rawblock                      {$$ = $1;}
-|     exp STOP                      {$$ = new ExpStmt($1);}
+stmt
+: use_stmt
+| assign_stmt
+| print_stmt
+| if_stmt
+| for_stmt
+| block_stmt
+| expr_stmt                    
 
-block: rawblock                     {$1->set_next(new NullStmt); $$ = $1; }
-rawblock: LC stmtlist RC            {$$ = new Block($2); }
+use_stmt
+:   USE ID STOP {$$ = new Use($2);}
 
-exp: exp BOP exp                    {$$ = new Boolean($1 ,$2, $3);}
-|    NOTTOK exp                     {$$ = new NotOper($2);}
-|    exp COMP exp                   {$$ = new Compare($1, $2, $3);}
-|    exp OPA exp                    {$$ = new Binary($1,$2,$3);}
-|    exp OPM exp                    {$$ = new Binary($1,$2,$3);}
-|    OPA exp %prec POSNEG           {$$ = ($1 == ADD ? $2 : new Negation($2));}
+assign_stmt
+:   LET ID ASSIGN expr STOP  {$$=new Let($2, $4);}
+|   ID ASSIGN expr STOP  {$$=new Assign($1, $3);}
+;
+
+print_stmt
+:   PRINT LP exprs RP STOP  {$$=new Print($3);}
+|   PRINTLN LP exprs RP STOP {$$=new PrintLn($3);}
+;
+
+if_stmt
+:   IF expr block    {$$ = new If($2, $3);}
+|   IF expr block ELSE block {$$ = new If($2, $3, $5);}
+;
+
+for_stmt
+:   FOR expr block   {$$ = new For($2, $3);}
+|   FOR stmt STOP expr STOP stmt STOP block {$$=new For($2, $4, $6, $8);}
+|   FOR ID IN RANGE expr block {$$=new For($2, $5, $6);}
+;
+
+block_stmt
+:   rawblock {$$=$1;}
+;
+
+expr_stmt
+:   expr STOP {$$ = new ExprStmt($1);}
+;
+
+
+
+block
+: rawblock {$1->set_next(new NullStmt); $$ = $1; }
+;
+
+rawblock
+: LC stmts RC {$$ = new Block($2); }
+;
+
+expr
+: expr BOP expr                    {$$ = new Boolean($1 ,$2, $3);}
+|    NOTTOK expr                     {$$ = new NotOper($2);}
+|    expr COMP expr                   {$$ = new Compare($1, $2, $3);}
+|    expr OPA expr                    {$$ = new Binary($1,$2,$3);}
+|    expr OPM expr                    {$$ = new Binary($1,$2,$3);}
+|    OPA expr %prec POSNEG           {$$ = ($1 == ADD ? $2 : new Negation($2));}
 |    READ                           {$$ = new Read();}
-|    exp LP exps RP                 {$$ = new FunCall($1,$3);}
+|    ID LP exprs RP                  {$$ = new Call($1,$3);}
 |    FUNC args block                {$$ = new Func($2,$3);}
 |    CONT LC arg_defs RC            {$$ = new Cont($3);}
-|    ID FROM ID                     {$$ = new ContEval($1, $3);}
-|    ID                             {$$ = $1;}
-|    INT                            {$$ = $1;}
-|    FLOAT                          {$$ = $1;}
-|    STRING                         {$$ = $1;}
-|    BOOL                           {$$ = $1;}
-
-exps:   exps COMA exp               {$$ = $1; $1->push_back($3);}
-|       exp                         {$$ = new std::vector<Exp*>(); $$->push_back($1);}
-
-args:   args COMA ID                {$$ = $1; $1->push_back($3);}
-|       ID                          {$$ = new std::vector<Id*>(); $$->push_back($1);}
+| container_eval
+| values
+;
 
 
-arg_defs: arg_defs COMA arg_def     {$$ = $1; $1->push_back($3);}
-|         arg_def                   {$$ = new std::vector<dict*>(); $$->push_back($1);}
+container_eval
+: ID FROM ID {$$=new ContainerEval($1, $3);}
+;
 
-arg_def:    ID COLON exp            {$$ = new dict($1, $3);}
+
+
+values
+: ID {$$ = $1;}
+| INT {$$ = $1;}
+| FLOAT {$$ = $1;}
+| STRING {$$ = $1;}
+| BOOL {$$ = $1;}
+;
+
+exprs
+: exprs COMA expr {$$ = $1; $1->push_back($3);}
+| expr {$$ = new std::vector<Expr*>(); $$->push_back($1);}
+;
+
+args
+: args COMA ID {$$ = $1; $1->push_back($3);}
+| ID {$$ = new std::vector<Id*>(); $$->push_back($1);}
+;
+
+arg_defs
+: arg_defs COMA arg_def {$$ = $1; $1->push_back($3);}
+| arg_def {$$ = new std::vector<dict*>(); $$->push_back($1);}
+;
+
+
+arg_def
+: ID COLON expr {$$ = new dict($1, $3);}
+;
 
 %%

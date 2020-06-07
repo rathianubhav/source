@@ -10,7 +10,7 @@ using namespace std;
 void scanerr() {
     if (!error) {
         cerr << "err: unrecognized token starting with '" << yytext << "'" << endl;
-        cerr << "code: " << (int) yytext << endl;
+        printf("code: %s\n", yytext);
         error = true;
     }
 }
@@ -43,14 +43,14 @@ char* quote_strip(char* str) {
 
 %%
 
-[0-9]+              { yylval.exp = new Int((long)atoi(yytext));   return INT;}
-([0-9]*[.])?[0-9]   { yylval.exp = new Float((double)atof(yytext)); return FLOAT;}
-true|false          { yylval.exp = new Bool(yytext[0] == 't'); return BOOL;}
+[0-9]+              { yylval.expr = new Int((long)atoi(yytext));   return INT;}
+([0-9]*[.])?[0-9]   { yylval.expr = new Float((double)atof(yytext)); return FLOAT;}
+true|false          { yylval.expr = new Bool(yytext[0] == 't'); return BOOL;}
 [+-]                { yylval.op  = (yytext[0] == '+' ? ADD : SUB); return OPA;}
 [*/]                { yylval.op  = (yytext[0] == '*' ? MUL : DIV); return OPM;}
 and|or              { yylval.op  = (yytext[0] == 'a' ? AND : OR); return BOP;}
 not                 { yylval.op  = NOT; return NOTTOK;}
-":="                { return ASN;    }
+":="                { return ASSIGN;    }
 "->"                { return FROM; }
 ":"                 { return COLON; }
 "("                 { return LP;}
@@ -74,7 +74,7 @@ func                { return FUNC;}
 cont                { return CONT;}
 let                 { return LET;}
 [a-zA-Z0-9_]+       { yylval.id = new Id(yytext); return ID;}
-["][^"]*["]         { yylval.exp = new String(quote_strip(yytext)); return STRING;}
+["][^"]*["]         { yylval.expr = new String(quote_strip(yytext)); return STRING;}
 <<EOF>>             { return 0;}
 [ \t\n]+            {}
 "/*"((\*+[^/*])|([^*]))*\**"*/" {}

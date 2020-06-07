@@ -44,12 +44,12 @@ class AST {
 
 };
 
-class Exp : public AST {
+class Expr : public AST {
     public:
         virtual Value eval(Frame* st) = 0;
 };
 
-class Id : public Exp {
+class Id : public Expr {
     private:
         string val;
     
@@ -62,7 +62,7 @@ class Id : public Exp {
         Value eval(Frame* st) override { return st->lookup(val); };
 };
 
-class Float : public Exp {
+class Float : public Expr {
     private:
         double val;
 
@@ -74,7 +74,7 @@ class Float : public Exp {
         Value eval(Frame *st) override { return Value(val); };
 };
 
-class Int : public Exp {
+class Int : public Expr {
      private:
         long val;
 
@@ -86,7 +86,7 @@ class Int : public Exp {
         Value eval(Frame *st) override { return Value(val); };
 };
 
-class String : public Exp {
+class String : public Expr {
     private:
         string val;
 
@@ -98,7 +98,7 @@ class String : public Exp {
 };
 
 
-class Bool : public Exp {
+class Bool : public Expr {
     private:
         bool val;
     public:
@@ -111,14 +111,14 @@ class Bool : public Exp {
 };
 
 
-class Binary : public Exp {
+class Binary : public Expr {
     private:
         Oper op;
-        Exp* left;
-        Exp* right;
+        Expr* left;
+        Expr* right;
     
     public:
-        Binary(Exp* l, Oper o, Exp* r) : op(o), left(l), right(r) {
+        Binary(Expr* l, Oper o, Expr* r) : op(o), left(l), right(r) {
             node_label = "(Expr) BinaryOper = " + to_string(op);
             add(left);
             add(right);
@@ -127,14 +127,14 @@ class Binary : public Exp {
 };
 
 
-class Compare : public Exp {
+class Compare : public Expr {
     private:
         Oper op;
-        Exp* left;
-        Exp* right;
+        Expr* left;
+        Expr* right;
 
     public:
-        Compare(Exp* l, Oper o, Exp* r) : op(o), left(l), right(r) {
+        Compare(Expr* l, Oper o, Expr* r) : op(o), left(l), right(r) {
             node_label = "(Expr) Compare " + to_string(op);
             add(left);
             add(right);
@@ -143,14 +143,14 @@ class Compare : public Exp {
         Value eval(Frame* st) override;
 };
 
-class Boolean : public Exp {
+class Boolean : public Expr {
     private:
-        Exp* left;
+        Expr* left;
         Oper op;
-        Exp* right;
+        Expr* right;
 
     public:
-        Boolean(Exp* l, Oper o, Exp* r) :
+        Boolean(Expr* l, Oper o, Expr* r) :
             left(l), op(o), right(r) {
                 node_label = "(Expr) Boolean " + to_string(op);
             }
@@ -158,12 +158,12 @@ class Boolean : public Exp {
         Value eval(Frame *st) override;
 };
 
-class Negation : public Exp {
+class Negation : public Expr {
     private:
-        Exp* right;
+        Expr* right;
     
     public:
-        Negation(Exp* r) : right(r) { 
+        Negation(Expr* r) : right(r) { 
             node_label = "(Expr) Negation";
             add(right); 
         }
@@ -184,11 +184,11 @@ class Negation : public Exp {
         }
 };
 
-class NotOper : public Exp {
-    Exp* right;
+class NotOper : public Expr {
+    Expr* right;
     
     public:
-        NotOper(Exp* r) : right(r) { 
+        NotOper(Expr* r) : right(r) { 
             node_label = "(Expr) Not";
             add(right); 
         }
@@ -211,7 +211,7 @@ class NotOper : public Exp {
 
 };
 
-class Read : public Exp {
+class Read : public Expr {
     public:
         Read() {
             node_label = "(Expr) Read";
@@ -252,14 +252,14 @@ class Block : public Stmt {
         void exec(Frame *st) override ;
 };
 
-class IfStmt : public Stmt {
+class If : public Stmt {
     private:
-        Exp* clause;
-        Stmt* ifblock;
-        Stmt* elseblock;
+        Expr* clause;
+        Block* ifblock;
+        Block* elseblock;
 
     public:
-        IfStmt(Exp* e, Stmt* ib, Stmt* eb) :
+        If(Expr* e, Block* ib, Block* eb = nullptr) :
         clause(e), ifblock(ib), elseblock(eb) 
         { node_label = "(Stmt) If"; add(clause); add(ifblock); add(elseblock); }
 
@@ -270,33 +270,50 @@ class IfStmt : public Stmt {
 enum FORTYPE {
     COND_T,
     RANGE_T,
+    C_T,
 };
-class ForStmt : public Stmt {
+class For : public Stmt {
     private:
-        Exp* clause;
-        Stmt* body;
+        Expr* clause, *check_cond;
+        Stmt *start_cond,  *incr;
+        Block* body;
         Id* id;
         FORTYPE type;
         
     public:
-        ForStmt(Exp* c, Stmt* b) :
+        For(Expr* c, Block* b) :
         clause(c), body(b) 
-        { node_label = "(Stmt) For"; add(clause); add(body); type = COND_T;}
+        { node_label = "(Stmt) For:cond"; add(clause); add(body); type = COND_T;}
 
-        ForStmt(Id* i, Exp* c, Stmt* b) : 
+        For(Id* i, Expr* c, Block* b) : 
         id(i), clause(c), body(b) 
-        { add(id); add(body);  type = RANGE_T;}
+        { add(id); add(body);  type = RANGE_T; node_label = "(Stmt) For:range";}
+
+        For(Stmt* s, Expr* c, Stmt* i, Block* b) :
+            start_cond(s),
+            check_cond(c),
+            incr(i),
+            body(b)
+        {
+            add(start_cond);
+            add(check_cond);
+            add(incr);
+            add(body);
+            node_label = "(Stmt) For:CType";
+            type = C_T;
+        }
+
 
         void exec(Frame* st) override;
 };
 
-class LetStmt : public Stmt {
+class Let : public Stmt {
     private:
         Id* lhs;
-        Exp* rhs;
+        Expr* rhs;
 
     public:
-        LetStmt(Id* l, Exp* r) : lhs(l), rhs(r) 
+        Let(Id* l, Expr* r) : lhs(l), rhs(r) 
         { node_label = "(Stmt) Let = " + lhs->get(); add(lhs); add(rhs); }
 
         void exec(Frame* st) override;
@@ -305,10 +322,10 @@ class LetStmt : public Stmt {
 class Assign : public Stmt {
     private:
         Id* lhs;
-        Exp* rhs;
+        Expr* rhs;
 
     public:
-        Assign(Id* l, Exp* r) : lhs(l), rhs(r) 
+        Assign(Id* l, Expr* r) : lhs(l), rhs(r) 
         { node_label = "(Stmt) Assign = " + lhs->get(); add(lhs); add(rhs); }
 
         void exec(Frame* st) override;
@@ -316,28 +333,28 @@ class Assign : public Stmt {
 
 class Print : public Stmt {
     private:
-        vector<Exp*> &val;
+        vector<Expr*> &val;
 
     public:
-        Print(vector<Exp*> *v) : val(*v) { node_label = "(Stmt) Print"; for(auto a : val) add(a); }
+        Print(vector<Expr*> *v) : val(*v) { node_label = "(Stmt) Print"; for(auto a : val) add(a); }
         void exec(Frame* st) override;
 };
 
 
 class PrintLn : public Stmt {
     private:
-        vector<Exp*> &val;
+        vector<Expr*> &val;
 
     public:
-        PrintLn(vector<Exp*> *v) : val(*v) { node_label = "(Stmt) Println"; for(auto a : val) add(a); }
+        PrintLn(vector<Expr*> *v) : val(*v) { node_label = "(Stmt) Println"; for(auto a : val) add(a); }
         void exec(Frame* st) override;
 };
 
-class UseStmt : public Stmt {
+class Use : public Stmt {
     string module_name;
     Stmt* sub_module;
     public:
-        UseStmt(Id* id) : module_name(id->get()) {node_label = "(Stmt) Use = " + id->get(); add(id);}
+        Use(Id* id) : module_name(id->get()) {node_label = "(Stmt) Use = " + id->get(); add(id);}
 
         void exec(Frame *st) override;
 };
@@ -352,20 +369,20 @@ class ExitStmt: public Stmt {
         }
 };
 
-class ExpStmt : public Stmt {
+class ExprStmt : public Stmt {
     private:
-        Exp* body;
+        Expr* body;
     
     public:
-        ExpStmt(Exp* b) : body(b) { 
-            node_label = "Stmt:ExpStmt";
+        ExprStmt(Expr* b) : body(b) { 
+            node_label = "Stmt:ExprStmt";
             add(body); 
         }
 
         void exec(Frame* st) override;
 };
 
-class Func : public Exp, public FuncDef {
+class Func : public Expr, public FuncDef {
     private:
         vector<Id*> &args;
         Stmt* body;
@@ -385,7 +402,7 @@ class Func : public Exp, public FuncDef {
         Value eval(Frame* st) override { return Value(this, st); }
 };
 
-class Cont : public Exp {
+class Cont : public Expr {
     private:
         vector<dict*> *values;
 
@@ -399,11 +416,12 @@ class Cont : public Exp {
         Value eval(Frame* st) override { return Value(values);}      
 };
 
-class ContEval : public Exp {
+class ContainerEval : public Expr {
     private:
-        Id *cont, *var;
+        Id *cont;
+        Id *var;
     public:
-        ContEval(Id* cont, Id* var) : cont(cont), var(var) {
+        ContainerEval(Id* cont, Id* var) : cont(cont), var(var) {
             add(cont);
             add(var);
             node_label = "container->eval";
@@ -413,25 +431,25 @@ class ContEval : public Exp {
             auto d =  st->lookup(cont->get()).dictval();
             for(auto i = d->begin(); i != d->end(); i++) {
                 auto x = *i;
-                if (x->first->get() == var->get()) {
+                if (x->first->get() == var->get() ) {
                     return x->second->eval(st);
                 }
             }
             return Value();
         }
 };
-class FunCall : public Exp {
+class Call : public Expr {
 
     private:
-        Exp* fun;
-        vector<Exp*> &args;
+        Id* id;
+        vector<Expr*> &args;
 
     public:
-        FunCall(Exp* f, vector<Exp*>* a) :
-        fun(f), args(*a) 
+        Call(Id* id, vector<Expr*>* a) :
+        id(id), args(*a) 
         {
-            node_label = "Expr:FunCall";
-            add(fun);
+            node_label = "Expr:Call " + id->get();
+            add(id);
             for(auto a : args) add(a);
         }
 

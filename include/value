@@ -11,7 +11,7 @@ using namespace std;
 class Stmt;
 class Frame;
 class Id;
-class Exp;
+class Expr;
 
 class FuncDef {
     public:
@@ -31,7 +31,7 @@ enum ValueType {
 };
 
 
-typedef pair<Id*, Exp*> dict;
+typedef pair<Id*, Expr*> dict;
 
 class Value {
 
