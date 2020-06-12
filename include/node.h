@@ -63,6 +63,27 @@ public:
     virtual Value eval(context::Context* cc) override;
 };
 
+
+class Array : public Expression {
+private:
+    std::vector<Expression*> *exprs;
+public:
+    Array(std::vector<Expression*> *exprs) : exprs(exprs) {}
+    void respr(context::Context* cc, std::ostream& out);
+    virtual Value eval(context::Context* cc) override;
+};
+
+class Access : public Expression {
+private:
+    Identifier* id;
+    Expression* expr;
+public:
+    Access(Identifier* id,Expression* expr) : id(id), expr(expr) {}
+    virtual Value eval(context::Context* cc) override;
+};
+
+
+
 class Arithmetic : public Expression {
 private:
     Oper op;
@@ -197,13 +218,32 @@ public:
 
 class Print : public Statment {
 private:
-    Expression* expr;
+    std::vector<Expression*> *expr;
 public:
-    Print(Expression* expr) : expr(expr) {}
+    Print(std::vector<Expression*> *expr) : expr(expr) {}
 
     virtual void exec(context::Context* cc) override;
     virtual ~Print() {
-        delete expr;
+        for(auto a : *expr) {
+            delete a;
+        }
+        expr->clear();
+    }
+};
+
+
+class Println : public Statment {
+private:
+    std::vector<Expression*> *expr;
+public:
+    Println(std::vector<Expression*> *expr) : expr(expr) {}
+
+    virtual void exec(context::Context* cc) override;
+    virtual ~Println() {
+        for(auto a : *expr) {
+            delete a;
+        }
+        expr->clear();
     }
 };
 
@@ -249,5 +289,18 @@ public:
             delete a;
         }
         arg->clear();
+    }
+};
+
+
+class Use : public Statment {
+private:
+    String* modname;
+public:
+    Use(String* md) : modname(md) {}
+
+    virtual void exec(context::Context* cc) override;
+    virtual ~Use() {
+        delete modname;
     }
 };

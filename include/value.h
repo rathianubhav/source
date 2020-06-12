@@ -4,16 +4,19 @@
 #include <iostream>
 #include <vector>
 
+
 class Identifier;
 class Statment;
+class Expression;
 
 class Method;
 
 namespace source {
 
+
 class ST;
 
-enum Type { INT_T, FLOAT_T, BOOL_T, NONE_T, STR_T, ANY_T, FUNC_T};
+enum Type { INT_T, FLOAT_T, BOOL_T, NONE_T, STR_T, ANY_T, FUNC_T, ARRAY_T};
 
 
 class MethodDefination {
@@ -37,6 +40,7 @@ private:
         char* Str;
         void* Any;
         Closure Func;
+        std::vector<Expression*> *Arr;
     } value;
 
     Type type;
@@ -48,6 +52,7 @@ public:
     explicit Value(bool b)  { type = BOOL_T; value.Bool = b;}
     explicit Value(char* c) { type = STR_T;  value.Str  = c;}
     explicit Value(void* v) { type = ANY_T;  value.Any  = v;}
+    explicit Value(std::vector<Expression*> *arr) { type = ARRAY_T; value.Arr = arr;}
     explicit Value(Method* f, source::ST* env) { 
         type = FUNC_T;
         value.Func.func = f;
@@ -64,6 +69,7 @@ public:
     bool Bool() {return value.Bool;}
     char* Str() {return value.Str;}
     void* Any() {return value.Any;}
+    std::vector<Expression*> *Arr() {return value.Arr;}
     Closure Func() {return value.Func;}
 
     void repr(std::ostream& out) {

@@ -7,7 +7,7 @@ int yyparse();
 std::vector<Statment*> *tree;
 
 void 
-source::interpreter::interprete(bool debug) {
+source::interpreter::interprete(std::vector<std::string> args, bool debug) {
     yyparse();
 
     int count = 0;
@@ -20,6 +20,7 @@ source::interpreter::interprete(bool debug) {
         }
         s->exec(cc);
     }
+
 }
 
 
@@ -47,6 +48,35 @@ Value
 String::eval(context::Context* cc)
 {
     return Value((char*)value.c_str());
+}
+
+Value
+Array::eval(context::Context* cc)
+{
+    return Value(exprs);
+}
+
+Value
+Access::eval(context::Context* cc)
+{
+    auto arr = cc->st->lookup(id->get());
+    if (arr.getType() != ARRAY_T) {
+        err << "err[key]: not a iterable object" << std::endl;
+        return Value();
+    }
+    if (expr->eval(cc).Int() > arr.Arr()->size()) {
+        err << "err[key]: out-of-index" << std::endl;
+        return Value();
+    }
+    return arr.Arr()->at(expr->eval(cc).Int())->eval(cc);
+}
+
+void
+Array::respr(context::Context* cc, std::ostream& out)
+{
+    for (auto a : *exprs) {
+        a->eval(cc).repr(out);
+    }
 }
 
 Value
@@ -180,7 +210,17 @@ Assign::exec(context::Context* cc)
 void
 Print::exec(context::Context* cc)
 {
-    expr->eval(cc).repr(std::cout);
+    for(auto a : *expr) {
+        a->eval(cc).repr(std::cout);
+    }
+}
+
+void
+Println::exec(context::Context* cc)
+{
+   for(auto a : *expr) {
+        a->eval(cc).repr(std::cout);
+    }
     std::cout << std::endl;
 }
 
@@ -190,3 +230,34 @@ ExpressionStatment::exec(context::Context* cc)
     body->eval(cc);
 }
 
+extern "C" FILE *yyin;
+
+void
+Use::exec(context::Context* cc)
+{
+    auto oldptr = yyin;
+
+    std::string mod = modname->eval(cc).Str();
+    mod += ".src";
+
+    for (auto a : std::vector<std::string>{ MOD_LOC, "./"}) {
+        if (releax::is_exist(a + "/" + mod)) {
+            mod = a + "/" + mod;
+            break;
+        }
+    }
+
+    if (!releax::is_exist(mod)) {
+        err << mod << " not exist" << std::endl;
+        return;
+    }
+
+    yyin = fopen(mod.c_str(), "r");
+    yyparse();
+    for(auto c : *tree) {
+        c->exec(cc);
+    }
+    //fclose(yyin);
+
+    yyin = oldptr;
+}

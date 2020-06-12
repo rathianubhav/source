@@ -20,7 +20,8 @@ source_main(releax::cli& app)
            yyin = fopen(filename.c_str(), "r");
        }
     }
-    source::interpreter::interprete(isdebug);
+    source::interpreter::interprete(app.args, isdebug);
+
     return 0;
 }
 

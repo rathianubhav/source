@@ -37,24 +37,28 @@ and|or yylval.op = (yytext[0] == 'a' ? AND : OR); return BOP;
 ")" return ')';
 "{" return '{';
 "}" return '}';
+"[" return '[';
+"]" return ']';
 ";" return ';';
 "," return ',';
 
 [><]|([><!=]=) yylval.op = getOper(yytext); return COMP;
 true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 
+"use" return USE;
 "func" return FUNC;
 "let" return LET;
 "if" return IF;
 "else" return ELSE;
 "for" return FOR;
 "print" return PRINT;
+"println" return PRINTLN;
 "typeof" return TYPEOF;
 
 [ \t\v\n\r\f] ;
 [a-zA-Z_][a-zA-Z_0-9]* yylval.id = new Identifier(yytext); return ID;
 ([0-9]*[.])?[0-9]+ yylval.num = new Number(yytext); return NUM;
-["][^"]*["] yylval.str = new String(yytext); return STRING;
+["][^"]*["] yylval.str = new String(trim(yytext)); return STRING;
 
 . std::cout << "err[lex]: unknow token starting with " << yytext << std::endl;
 
