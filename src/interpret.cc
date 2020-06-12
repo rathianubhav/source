@@ -21,6 +21,20 @@ source::interpreter::interprete(std::vector<std::string> args, bool debug) {
         s->exec(cc);
     }
 
+    if (!cc->st->defined("main")) {
+        err << "no main function defined" << std::endl;
+        return;
+    }
+
+    auto v = new std::vector<Expression*>;
+    for(auto a : args) {
+        v->push_back(new String(a.c_str()));
+    }
+
+    auto main_func = cc->st->lookup("main").Func();
+    auto ar = main_func.func->get_args();
+    main_func.env->bind(ar->at(0)->get(), Value(v));
+    main_func.func->get_body()->exec(cc);
 }
 
 

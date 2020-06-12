@@ -1,0 +1,3 @@
+let main := func args {
+	println(args[0]);
+};
