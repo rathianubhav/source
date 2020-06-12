@@ -24,6 +24,8 @@ void yyerror(const char* e);
     std::vector<Expression*> *arrE;
     std::vector<Identifier*> *arrI;
     Number* num;
+    dict* adict;
+    std::vector<dict*>* arrD;
     Oper op;
 };
 
@@ -37,18 +39,20 @@ void yyerror(const char* e);
 %token<id> ID
 %token<expr> NUM BOOL STRING
 
-%token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN TYPEOF USE SNULL IN
+%token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN TYPEOF USE SNULL IN CONT
 
 
 %type<expr> value expr
-%type<expr> math_expr func_expr typeof_expr arr_expr
+%type<expr> math_expr func_expr typeof_expr arr_expr cont_expr cont_eval
 %type<stmt> stmt
 %type<stmt> assign_stmt condit_stmt loop_stmt expr_stmt print_stmt use_stmt 
 %type<block> block
+%type<adict> arg_def
 
 %type<arr> program stmts
 %type<arrE> exprs
 %type<arrI> ids
+%type<arrD> arg_defs
 
 %destructor {delete $$;} <block>
 %destructor {delete $$;} <stmt>
@@ -121,8 +125,10 @@ expr
 | value
 | '(' expr ')' {$$=$2;}
 | arr_expr
+| cont_expr
 | SNULL {$$=new Null();}
 | ID '[' expr ']' {$$=new Access($1, $3);}
+| cont_eval
 ;
 
 
@@ -134,13 +140,29 @@ math_expr
 
 func_expr
 : FUNC ids block {$$=new Method($2, $3);}
-| ID '(' exprs ')' {$$=new Call($1, $3);}
+| expr '(' exprs ')' {$$=new Call($1, $3);}
 ;
 
 exprs
 : exprs ',' expr {$$=$1; $$->push_back($3);}
 | expr {$$=new std::vector<Expression*>(); $$->push_back($1);}
 | /* blank */ {$$=new std::vector<Expression*>();}
+;
+
+cont_expr
+: CONT '{' arg_defs '}' {$$=new Container($3);}
+;
+
+cont_eval
+: ID '.' ID {$$=new ContainerEval($1, $3);}
+;
+
+arg_defs
+: arg_defs ',' arg_def {$$=$1; $1->push_back($3);}
+| arg_def {$$=new std::vector<dict*>(); $$->push_back($1);}
+
+arg_def
+: ID ':' expr {$$=new dict($1, $3);}
 ;
 
 ids

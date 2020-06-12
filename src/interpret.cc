@@ -71,6 +71,26 @@ Access::eval(context::Context* cc)
     return arr.Arr()->at(expr->eval(cc).Int())->eval(cc);
 }
 
+Value
+Container::eval(context::Context* cc)
+{
+    return Value(value);
+}
+
+Value
+ContainerEval::eval(context::Context* cc)
+{
+    auto d = cc->st->lookup(cont->get()).Dict();
+    for(auto i = d->begin(); i != d->end(); i++) {
+        auto a =*i;
+        if (a->first->get() == var->get()) {
+            return a->second->eval(cc);
+        }
+    }
+
+    return Value();
+}
+
 void
 Array::respr(context::Context* cc, std::ostream& out)
 {
@@ -124,7 +144,7 @@ Method::eval(context::Context* cc)
 Value
 Call::eval(context::Context* cc)
 {
-    Closure func = cc->st->lookup(id->get()).Func();
+    Closure func = id->eval(cc).Func();
     source::ST* funenv = new source::ST(func.env);
 
     funenv->bind("ret", Value());
@@ -276,9 +296,24 @@ Use::exec(context::Context* cc)
         c->exec(modcc);
     }
 
+    auto d = new std::vector<dict*>();
     for(auto s : modcc->st->bindings) {
-        cc->st->bind(mod_name + "_" + s.first, s.second);
+        auto val = s.second;
+        auto x = new dict();
+        x->first = new Identifier(s.first.c_str());
+        switch (val.getType()) {
+            case INT_T:
+            case FLOAT_T: x->second = new Number(std::to_string(val.Int()).c_str()); break;
+            case STR_T: x->second = new String(val.Str()); break;
+            case BOOL_T: x->second = new Bool(val.Bool()); break;
+            case FUNC_T: x->second = val.Func().func; break;
+            case DICT_T: x->second = new Container(val.Dict()); break;
+        }
+
+        d->push_back(x);
     }
+
+    cc->st->bind(mod_name, Value(d));
     //fclose(yyin);
     delete modcc;
 

@@ -16,8 +16,10 @@ namespace source {
 
 class ST;
 
-enum Type { INT_T, FLOAT_T, BOOL_T, NONE_T, STR_T, ANY_T, FUNC_T, ARRAY_T};
+enum Type { INT_T, FLOAT_T, BOOL_T, NONE_T, STR_T, ANY_T, FUNC_T, ARRAY_T, DICT_T};
 
+
+typedef std::pair<Identifier*, Expression*> dict;
 
 class MethodDefination {
 public:
@@ -41,6 +43,7 @@ private:
         void* Any;
         Closure Func;
         std::vector<Expression*> *Arr;
+        std::vector<dict*> *Dict;
     } value;
 
     Type type;
@@ -60,6 +63,8 @@ public:
 
     }
 
+    explicit Value(std::vector<dict*> *d) { type = DICT_T, value.Dict = d;}
+
 
     Type getType() {return type;}
     void setType(Type t) {type = t;}
@@ -71,6 +76,7 @@ public:
     void* Any() {return value.Any;}
     std::vector<Expression*> *Arr() {return value.Arr;}
     Closure Func() {return value.Func;}
+    std::vector<dict*> *Dict() {return value.Dict;}
 
     void repr(std::ostream& out) {
         switch(type) {

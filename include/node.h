@@ -92,6 +92,22 @@ public:
     virtual Value eval(context::Context* cc) override;
 };
 
+class Container : public Expression {
+private:
+    std::vector<dict*> *value;
+public:
+    Container(std::vector<dict*> *value) : value(value) {}
+    virtual Value eval(context::Context* cc) override;
+};
+
+class ContainerEval : public Expression {
+private:
+    Identifier* cont, *var;
+public:
+    ContainerEval(Identifier* id, Identifier* var) : cont(id), var(var) {}
+
+    virtual Value eval(context::Context* cc) override;
+};
 
 
 class Arithmetic : public Expression {
@@ -301,9 +317,9 @@ public:
 class Call : public Expression {
 private:
     std::vector<Expression*> *arg;
-    Identifier *id;
+    Expression *id;
 public:
-    Call(Identifier* id, std::vector<Expression*> *a) : id(id), arg(a) {}
+    Call(Expression* id, std::vector<Expression*> *a) : id(id), arg(a) {}
     virtual Value eval(context::Context* cc) override;
 
     virtual ~Call() {

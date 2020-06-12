@@ -1,5 +1,0 @@
-use "std";
-use "math";
-
-println(std_x(5));
-println(math_cos(5.0));

@@ -33,6 +33,7 @@ char* trim(char* str) {
 and|or yylval.op = (yytext[0] == 'a' ? AND : OR); return BOP;
 
 ":=" return ASSIGN;
+"." return '.';
 "(" return '(';
 ")" return ')';
 "{" return '{';
@@ -40,6 +41,7 @@ and|or yylval.op = (yytext[0] == 'a' ? AND : OR); return BOP;
 "[" return '[';
 "]" return ']';
 ";" return ';';
+":" return ':';
 "," return ',';
 
 [><]|([><!=]=) yylval.op = getOper(yytext); return COMP;
@@ -47,6 +49,7 @@ true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 
 "use" return USE;
 "func" return FUNC;
+"cont" return CONT;
 "let" return LET;
 "if" return IF;
 "else" return ELSE;
