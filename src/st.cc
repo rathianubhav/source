@@ -43,3 +43,12 @@ source::ST::rebind(std::string name, source::Value val)
         exit(5);
     }
 }
+
+
+bool
+source::ST::defined(std::string name)
+{
+    auto f = search(name);
+    if (f) return true;
+    else return false;
+}

@@ -1,0 +1,3 @@
+let cos := func angle {
+	ret := angle + 40.0;
+};

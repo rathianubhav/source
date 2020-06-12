@@ -174,19 +174,32 @@ public:
 };
 
 
+enum FOR_LOOP {
+    INLOOP,
+    UNTIL
+};
+
 class Loop : public Statment {
 private:
     Expression* expr;
     Statment* body;
+    FOR_LOOP type;
+    Identifier* id;
+    Array* arr;
 
 public:
     Loop(Expression* expr, Statment* body)
-        : expr(expr), body(body) {}
+        : expr(expr), body(body), type(UNTIL) {}
+
+    Loop(Identifier* id, Array* arr, Statment* body)
+        : id(id), arr(arr), body(body), type(INLOOP) {}
 
     virtual void exec(context::Context* cc) override;
     virtual ~Loop() {
-        delete expr;
-        delete body;
+        if (expr) delete expr;
+        if (body) delete body;
+        if (id) delete id;
+        if (arr) delete arr;
     }
 };
 

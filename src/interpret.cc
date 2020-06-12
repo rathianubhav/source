@@ -188,8 +188,23 @@ Typeof::eval(context::Context* cc)
 void
 Loop::exec(context::Context* cc)
 {
-    while(expr->eval(cc).Bool()) {
-        body->exec(cc);
+    switch(type) {
+        case UNTIL: while(expr->eval(cc).Bool()) body->exec(cc); break;
+        case INLOOP: {
+            Value backup;
+            if (cc->st->defined(id->get())) {
+                backup = cc->st->lookup(id->get());
+            } else {
+                cc->st->bind(id->get(), Value());
+            }
+            for(auto a : *arr->eval(cc).Arr()) {
+                cc->st->rebind(id->get(), Value(a->eval(cc)));
+                body->exec(cc);
+            }
+
+            break;
+        }
+
     }
 }
 
@@ -238,6 +253,7 @@ Use::exec(context::Context* cc)
     auto oldptr = yyin;
 
     std::string mod = modname->eval(cc).Str();
+    std::string mod_name = mod;
     mod += ".src";
 
     for (auto a : std::vector<std::string>{ MOD_LOC, "./"}) {
@@ -254,10 +270,17 @@ Use::exec(context::Context* cc)
 
     yyin = fopen(mod.c_str(), "r");
     yyparse();
+
+    auto modcc = source::context::init(cc->st);
     for(auto c : *tree) {
-        c->exec(cc);
+        c->exec(modcc);
+    }
+
+    for(auto s : modcc->st->bindings) {
+        cc->st->bind(mod_name + "_" + s.first, s.second);
     }
     //fclose(yyin);
+    delete modcc;
 
     yyin = oldptr;
 }

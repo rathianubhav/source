@@ -37,7 +37,7 @@ void yyerror(const char* e);
 %token<id> ID
 %token<expr> NUM BOOL STRING
 
-%token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN TYPEOF USE SNULL
+%token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN TYPEOF USE SNULL IN
 
 
 %type<expr> value expr
@@ -87,6 +87,7 @@ condit_stmt
 
 loop_stmt
 : FOR expr block {$$=new Loop($2, $3);}
+| FOR ID IN arr_expr block {$$=new Loop($2, $4, $5);}
 ;
 
 
@@ -121,6 +122,7 @@ expr
 | '(' expr ')' {$$=$2;}
 | arr_expr
 | SNULL {$$=new Null();}
+| ID '[' expr ']' {$$=new Access($1, $3);}
 ;
 
 
@@ -154,7 +156,6 @@ typeof_expr
 
 arr_expr
 : '[' exprs ']' {$$=new Array($2);}
-| ID '[' expr ']' {$$=new Access($1, $3);}
 ;
 
 value
