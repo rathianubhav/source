@@ -37,11 +37,11 @@ void yyerror(const char* e);
 %token<id> ID
 %token<expr> NUM BOOL STRING
 
-%token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN TYPEOF USE
+%token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN TYPEOF USE SNULL
 
 
 %type<expr> value expr
-%type<expr> math_expr func_expr typeof_expr
+%type<expr> math_expr func_expr typeof_expr arr_expr
 %type<stmt> stmt
 %type<stmt> assign_stmt condit_stmt loop_stmt expr_stmt print_stmt use_stmt 
 %type<block> block
@@ -119,8 +119,8 @@ expr
 | typeof_expr
 | value
 | '(' expr ')' {$$=$2;}
-| '[' exprs ']' {$$=new Array($2);}
-| ID '[' expr ']' {$$=new Access($1, $3);}
+| arr_expr
+| SNULL {$$=new Null();}
 ;
 
 
@@ -149,6 +149,12 @@ ids
 
 typeof_expr
 : TYPEOF '(' expr ')' {$$=new Typeof($3);}
+;
+
+
+arr_expr
+: '[' exprs ']' {$$=new Array($2);}
+| ID '[' expr ']' {$$=new Access($1, $3);}
 ;
 
 value

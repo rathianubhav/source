@@ -73,6 +73,16 @@ public:
     virtual Value eval(context::Context* cc) override;
 };
 
+
+class Null : public Expression {
+private:
+public:
+    Null() {}
+    virtual Value eval(context::Context* cc) override {
+        return Value();
+    }
+};
+
 class Access : public Expression {
 private:
     Identifier* id;
