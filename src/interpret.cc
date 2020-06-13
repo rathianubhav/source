@@ -1,5 +1,5 @@
 #include <interpreter.h>
-
+#include <inbuilts.h>
 extern bool error;
 extern bool isdebug;
 
@@ -13,6 +13,11 @@ source::interpreter::interprete(std::vector<std::string> args, bool debug) {
     int count = 0;
 
     auto cc = source::context::init(nullptr);
+
+
+    // auto t = new Typeof();
+    // cc->st->bind(t->getID(), Value(t, nullptr));
+
     for (auto s : *tree) {
         if (debug) {
             std::cout << "["<< count++ << "] statment " << std::endl;
@@ -67,6 +72,9 @@ String::eval(context::Context* cc)
 Value
 Array::eval(context::Context* cc)
 {
+    if (id) {
+        return Value(cc->st->lookup(id->get()));
+    }
     return Value(exprs);
 }
 
@@ -94,7 +102,7 @@ Container::eval(context::Context* cc)
 Value
 ContainerEval::eval(context::Context* cc)
 {
-    auto d = cc->st->lookup(cont->get()).Dict();
+    auto d = cont->eval(cc).Dict();
     for(auto i = d->begin(); i != d->end(); i++) {
         auto a =*i;
         if (a->first->get() == var->get()) {
@@ -162,8 +170,10 @@ Call::eval(context::Context* cc)
     source::ST* funenv = new source::ST(func.env);
 
     funenv->bind("ret", Value());
+    std::vector<Identifier*> *func_req_args;
 
-    auto func_req_args = func.func->get_args();
+    func_req_args = func.func->get_args();
+
     int fnc = func_req_args->size(),
         clc = arg->size();
 
@@ -183,7 +193,9 @@ Call::eval(context::Context* cc)
     }
 
     auto fc = source::context::init(funenv);
+
     func.func->get_body()->exec(fc);
+    
     return funenv->lookup("ret");
 }
 
@@ -205,20 +217,7 @@ Condition::exec(context::Context* cc)
     }
 }
 
-Value
-Typeof::eval(context::Context* cc)
-{
-    switch (expr->eval(cc).getType()) 
-    {
-        case INT_T: return Value("int");
-        case FLOAT_T: return Value("float");
-        case FUNC_T: return Value("func");
-        case STR_T: return Value("str");
-        case BOOL_T: return Value("bool");
-        case ANY_T: return Value("any");
-        case NONE_T: return Value("none");
-    }
-}
+
 void
 Loop::exec(context::Context* cc)
 {
@@ -231,6 +230,7 @@ Loop::exec(context::Context* cc)
             } else {
                 cc->st->bind(id->get(), Value());
             }
+
             for(auto a : *arr->eval(cc).Arr()) {
                 cc->st->rebind(id->get(), Value(a->eval(cc)));
                 body->exec(cc);
@@ -290,7 +290,13 @@ Use::exec(context::Context* cc)
     std::string mod_name = mod;
     mod += ".src";
 
-    for (auto a : std::vector<std::string>{ MOD_LOC, "./"}) {
+    char* c = std::getenv("SRC_MOD");
+    if (c == NULL) {
+        c = "/usr/lib/modules/vendor";
+    }
+        
+
+    for (auto a : std::vector<std::string>{ MOD_LOC, "./", c }) {
         if (releax::is_exist(a + "/" + mod)) {
             mod = a + "/" + mod;
             break;

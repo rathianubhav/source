@@ -1,0 +1,7 @@
+#!/bin/source
+
+use "std";
+
+let main := func args {
+	println();
+};

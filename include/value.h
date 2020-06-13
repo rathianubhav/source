@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 
-
 class Identifier;
 class Statment;
 class Expression;
@@ -21,7 +20,7 @@ enum Type { INT_T, FLOAT_T, BOOL_T, NONE_T, STR_T, ANY_T, FUNC_T, ARRAY_T, DICT_
 
 typedef std::pair<Identifier*, Expression*> dict;
 
-class MethodDefination {
+class MethodDefination{
 public:
     virtual std::vector<Identifier*> *get_args() = 0;
     virtual Statment* get_body() = 0;
@@ -58,10 +57,11 @@ public:
     explicit Value(std::vector<Expression*> *arr) { type = ARRAY_T; value.Arr = arr;}
     explicit Value(Method* f, source::ST* env) { 
         type = FUNC_T;
-        value.Func.func = f;
+        value.Func.func =f;
         value.Func.env = env;
 
     }
+
 
     explicit Value(std::vector<dict*> *d) { type = DICT_T, value.Dict = d;}
 

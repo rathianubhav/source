@@ -67,8 +67,10 @@ public:
 class Array : public Expression {
 private:
     std::vector<Expression*> *exprs;
+    Identifier* id;
 public:
     Array(std::vector<Expression*> *exprs) : exprs(exprs) {}
+    Array(Identifier* id) : id(id) {}
     void respr(context::Context* cc, std::ostream& out);
     virtual Value eval(context::Context* cc) override;
 };
@@ -102,9 +104,10 @@ public:
 
 class ContainerEval : public Expression {
 private:
-    Identifier* cont, *var;
+    Expression* cont;
+    Identifier* var;
 public:
-    ContainerEval(Identifier* id, Identifier* var) : cont(id), var(var) {}
+    ContainerEval(Expression* cont, Identifier* var) : cont(cont), var(var) {}
 
     virtual Value eval(context::Context* cc) override;
 };
@@ -134,16 +137,6 @@ public:
     virtual Value eval(context::Context* cc) override;
 
     virtual ~Compare() { delete left; delete right;}
-};
-
-
-class Typeof : public Expression {
-private:
-    Expression* expr;
-public:
-    Typeof(Expression* expr) : expr(expr) {}
-    virtual Value eval(context::Context* cc) override;
-    virtual ~Typeof() { delete expr;}
 };
 
 
@@ -192,22 +185,22 @@ public:
 
 enum FOR_LOOP {
     INLOOP,
-    UNTIL
+    UNTIL,
+    ARR,
 };
 
 class Loop : public Statment {
 private:
-    Expression* expr;
+    Expression* expr, *arr;
     Statment* body;
     FOR_LOOP type;
     Identifier* id;
-    Array* arr;
 
 public:
     Loop(Expression* expr, Statment* body)
         : expr(expr), body(body), type(UNTIL) {}
 
-    Loop(Identifier* id, Array* arr, Statment* body)
+    Loop(Identifier* id, Expression* arr, Statment* body)
         : id(id), arr(arr), body(body), type(INLOOP) {}
 
     virtual void exec(context::Context* cc) override;

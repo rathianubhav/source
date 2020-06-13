@@ -56,7 +56,6 @@ true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 "for" return FOR;
 "print" return PRINT;
 "println" return PRINTLN;
-"typeof" return TYPEOF;
 "null" return SNULL;
 "in" return IN;
 
@@ -64,7 +63,7 @@ true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 [a-zA-Z_][a-zA-Z_0-9]* yylval.id = new Identifier(yytext); return ID;
 ([0-9]*[.])?[0-9]+ yylval.num = new Number(yytext); return NUM;
 ["][^"]*["] yylval.str = new String(trim(yytext)); return STRING;
-
+"#!".* ;
 . std::cout << "err[lex]: unknow token starting with " << yytext << std::endl;
 
 %%
