@@ -31,7 +31,7 @@ char* trim(char* str) {
 [+-] yylval.op = (yytext[0] == '+' ? ADD : SUB); return OPA;
 [*/] yylval.op = (yytext[0] == '*' ? MUL : DIV); return OPM;
 and|or yylval.op = (yytext[0] == 'a' ? AND : OR); return BOP;
-
+not yylval.op = NOT; return NOTTOK;
 ":=" return ASSIGN;
 "." return '.';
 "(" return '(';
@@ -58,6 +58,8 @@ true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 "println" return PRINTLN;
 "null" return SNULL;
 "in" return IN;
+"break" return BREAK;
+"continue" return CONTINUE;
 
 [ \t\v\n\r\f] ;
 [a-zA-Z_][a-zA-Z_0-9]* yylval.id = new Identifier(yytext); return ID;

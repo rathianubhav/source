@@ -126,6 +126,19 @@ public:
     virtual ~Arithmetic() { delete left; delete right;}
 };
 
+class Logical : public Expression {
+private:
+    Oper op;
+    Expression *left, *right; 
+public:
+    Logical(Expression*left, Oper op, Expression* right)
+    :   left(left), op(op), right(right) {}
+
+    virtual Value eval(context::Context* cc) override;
+
+    virtual ~Logical() { delete left; delete right;}
+};
+
 class Compare : public Expression {
 private:
     Oper op;
@@ -139,6 +152,16 @@ public:
     virtual ~Compare() { delete left; delete right;}
 };
 
+
+class Negation : public Expression {
+private:
+    Expression *expr;
+public:
+    Negation(Expression* expr) : expr(expr) {}
+    virtual Value eval(context::Context* cc) override;
+
+    virtual ~Negation() { delete expr;}
+};
 
 class Statment : public Node {
 private:
@@ -154,7 +177,7 @@ private:
     std::vector<Statment*> *body;
 public:
     Block(std::vector<Statment*> *body) : body(body) {}
-
+    std::vector<Statment*> *get_body() {return body;}
     virtual void exec(context::Context* cc) override;
     virtual ~Block() {
         for(auto b : *body) {
@@ -192,15 +215,15 @@ enum FOR_LOOP {
 class Loop : public Statment {
 private:
     Expression* expr, *arr;
-    Statment* body;
+    Block* body;
     FOR_LOOP type;
     Identifier* id;
 
 public:
-    Loop(Expression* expr, Statment* body)
+    Loop(Expression* expr, Block* body)
         : expr(expr), body(body), type(UNTIL) {}
 
-    Loop(Identifier* id, Expression* arr, Statment* body)
+    Loop(Identifier* id, Expression* arr, Block* body)
         : id(id), arr(arr), body(body), type(INLOOP) {}
 
     virtual void exec(context::Context* cc) override;
@@ -212,6 +235,20 @@ public:
     }
 };
 
+
+class Break : public Statment {
+private:
+public:
+    Break() {}
+    virtual void exec(context::Context*cc) {};
+};
+
+class Continue : public Statment {
+private:
+public:
+    Continue() {}
+    virtual void exec(context::Context*cc) {};
+};
 
 class Let : public Statment {
 private:
@@ -294,6 +331,7 @@ private:
     std::vector<Identifier*> *id;
     Statment* body;
 public:
+    Method() {}
     Method(std::vector<Identifier*> *id, Statment* body)
     : id(id), body(body) {}
 

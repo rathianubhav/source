@@ -39,13 +39,13 @@ void yyerror(const char* e);
 %token<id> ID
 %token<expr> NUM BOOL STRING
 
-%token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN USE SNULL IN CONT
+%token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN USE SNULL IN CONT BREAK CONTINUE
 
 
 %type<expr> value expr
 %type<expr> math_expr func_expr arr_expr cont_expr cont_eval
 %type<stmt> stmt
-%type<stmt> assign_stmt condit_stmt loop_stmt expr_stmt print_stmt use_stmt 
+%type<stmt> assign_stmt condit_stmt loop_stmt expr_stmt print_stmt use_stmt
 %type<block> block
 %type<adict> arg_def
 
@@ -74,6 +74,8 @@ stmt
 | expr_stmt
 | print_stmt
 | use_stmt
+| BREAK ';' {$$=new Break();}
+| CONTINUE ';' {$$=new Continue();}
 ;
 
 
@@ -135,6 +137,8 @@ math_expr
 : expr COMP expr {$$=new Compare($1, $2, $3);}
 | expr OPA expr {$$=new Arithmetic($1, $2, $3);}
 | expr OPM expr {$$=new Arithmetic($1, $2, $3);}
+| expr BOP expr {$$=new Logical($1, $2, $3);}
+| NOTTOK expr {$$=new Negation($2);}
 ;
 
 func_expr

@@ -38,7 +38,7 @@ private:
         int Int;
         double Float;
         bool Bool;
-        char* Str;
+        std::string* Str;
         void* Any;
         Closure Func;
         std::vector<Expression*> *Arr;
@@ -52,7 +52,8 @@ public:
     explicit Value(int n)   { type = INT_T;  value.Int  = n;}
     explicit Value(double d){ type = FLOAT_T; value.Float = d;}
     explicit Value(bool b)  { type = BOOL_T; value.Bool = b;}
-    explicit Value(char* c) { type = STR_T;  value.Str  = c;}
+    explicit Value(char* c) { type = STR_T;  value.Str  = new std::string(c);}
+    explicit Value(std::string c) { type = STR_T;  value.Str  = new std::string(c);}
     explicit Value(void* v) { type = ANY_T;  value.Any  = v;}
     explicit Value(std::vector<Expression*> *arr) { type = ARRAY_T; value.Arr = arr;}
     explicit Value(Method* f, source::ST* env) { 
@@ -72,7 +73,7 @@ public:
     int Int() {return value.Int;}
     double Float() {return value.Float;}
     bool Bool() {return value.Bool;}
-    char* Str() {return value.Str;}
+    std::string Str() {return *value.Str;}
     void* Any() {return value.Any;}
     std::vector<Expression*> *Arr() {return value.Arr;}
     Closure Func() {return value.Func;}
@@ -83,7 +84,7 @@ public:
             case INT_T: out << value.Int; break;
             case FLOAT_T: out << value.Float; break;
             case BOOL_T: out << (value.Bool ? "true": "false"); break;
-            case STR_T: out << value.Str; break;
+            case STR_T: out << *value.Str; break;
             case NONE_T: out << "unset"; break;
             case ANY_T: out << value.Any; break;
         }
@@ -97,7 +98,7 @@ public:
             case INT_T: return value.Int == other.value.Int;
             case FLOAT_T: return value.Float == other.value.Float;
             case BOOL_T: return value.Bool == other.value.Bool;
-            case STR_T: return !strcmp(value.Str, other.value.Str);
+            case STR_T: return value.Str ==  other.value.Str;
             case FUNC_T: return false;
             case NONE_T: return true;
             case ANY_T: return value.Any == other.value.Any;
@@ -111,7 +112,7 @@ public:
             case INT_T: return value.Int < other.value.Int;
             case FLOAT_T: return value.Float < other.value.Float;
             case BOOL_T: return value.Bool < other.value.Bool;
-            case STR_T: return strlen(value.Str) <  strlen(other.value.Str);
+            case STR_T: return value.Str->length() < other.value.Str->length();
             case FUNC_T: return false;
             case NONE_T: return false;
             case ANY_T: return value.Any < other.value.Any;
@@ -126,9 +127,7 @@ public:
             case FLOAT_T: return Value(value.Float + other.value.Float);
             case BOOL_T: return Value(value.Bool + other.value.Bool);
             case STR_T: {
-                std::string a(value.Str);
-                std::string r(other.value.Str);
-                return Value((char*)(a + r).c_str());
+                return Value((char*)(*value.Str + *other.value.Str).c_str());
             }
         }
         return Value();

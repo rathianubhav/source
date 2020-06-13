@@ -5,7 +5,7 @@ extern bool isdebug;
 
 int yyparse();
 std::vector<Statment*> *tree;
-
+extern std::vector<InBuilt*> inbuilts;
 void 
 source::interpreter::interprete(std::vector<std::string> args, bool debug) {
     yyparse();
@@ -14,9 +14,10 @@ source::interpreter::interprete(std::vector<std::string> args, bool debug) {
 
     auto cc = source::context::init(nullptr);
 
-
-    // auto t = new Typeof();
-    // cc->st->bind(t->getID(), Value(t, nullptr));
+   
+    for(auto a : inbuilts) {
+        cc->st->bind(a->getID(), Value(a, nullptr));
+    }
 
     for (auto s : *tree) {
         if (debug) {
@@ -140,6 +141,18 @@ Arithmetic::eval(context::Context* cc)
 }
 
 Value
+Logical::eval(context::Context* cc)
+{
+    auto l = left->eval(cc).Bool();
+    auto r = right->eval(cc).Bool();
+
+    switch(op) {
+        case AND:   return Value(l && r);
+        case OR:   return Value(l || r);
+    }
+}
+
+Value
 Compare::eval(context::Context* cc)
 {
     auto l = left->eval(cc);
@@ -155,6 +168,11 @@ Compare::eval(context::Context* cc)
     }
 }
 
+Value
+Negation::eval(context::Context* cc)
+{
+    return Value(! expr->eval(cc).Bool());
+}
 
 
 Value
@@ -170,9 +188,7 @@ Call::eval(context::Context* cc)
     source::ST* funenv = new source::ST(func.env);
 
     funenv->bind("ret", Value());
-    std::vector<Identifier*> *func_req_args;
-
-    func_req_args = func.func->get_args();
+    auto func_req_args = func.func->get_args();
 
     int fnc = func_req_args->size(),
         clc = arg->size();
@@ -222,7 +238,11 @@ void
 Loop::exec(context::Context* cc)
 {
     switch(type) {
-        case UNTIL: while(expr->eval(cc).Bool()) body->exec(cc); break;
+        case UNTIL: 
+            while(expr->eval(cc).Bool()) {
+                body->exec(cc);
+            } 
+            break;
         case INLOOP: {
             Value backup;
             if (cc->st->defined(id->get())) {
@@ -231,11 +251,11 @@ Loop::exec(context::Context* cc)
                 cc->st->bind(id->get(), Value());
             }
 
+            int x = 0;
             for(auto a : *arr->eval(cc).Arr()) {
                 cc->st->rebind(id->get(), Value(a->eval(cc)));
                 body->exec(cc);
             }
-
             break;
         }
 
@@ -324,7 +344,7 @@ Use::exec(context::Context* cc)
         switch (val.getType()) {
             case INT_T:
             case FLOAT_T: x->second = new Number(std::to_string(val.Int()).c_str()); break;
-            case STR_T: x->second = new String(val.Str()); break;
+            case STR_T: x->second = new String(val.Str().c_str()); break;
             case BOOL_T: x->second = new Bool(val.Bool()); break;
             case FUNC_T: x->second = val.Func().func; break;
             case DICT_T: x->second = new Container(val.Dict()); break;
