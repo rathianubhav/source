@@ -95,10 +95,31 @@ public:
     virtual Value run(std::vector<Value> args) override;
 };
 
+class Fputc : public InBuilt {
+public:
+    Fputc() {
+        id = "fputc";
+        set_args_count(2);
+    }
+
+    virtual Value run(std::vector<Value> args) override;
+};
+
 class Fclose : public InBuilt {
 public:
     Fclose() : InBuilt() {
         id = "fclose";
+        set_args_count(1);
+    }
+
+    virtual Value run(std::vector<Value> args) override;
+};
+
+
+class Range : public InBuilt {
+public:
+    Range() {
+        id = "range";
         set_args_count(1);
     }
 

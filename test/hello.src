@@ -4,11 +4,7 @@ use "std";
 
 let main := func args {
 	
-	for i in [1,2,3,4,5,6,7] {
-		if i == 5 {
-			break;
-		}
+	for i in range(8.5) {
 		println(i);
 	}
-
 };

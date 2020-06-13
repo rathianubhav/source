@@ -53,6 +53,11 @@ Identifier::eval(context::Context* cc)
 Value
 Number::eval(context::Context* cc)
 {
+    switch(x) {
+        case 1: return Value(ivalue);
+        case 2: return Value(dvalue);
+    }
+        
     int dotind = value.rfind('.');
     if (dotind == std::string::npos) return Value(atoi(value.c_str()));
     return Value(strtod(value.c_str(), 0));

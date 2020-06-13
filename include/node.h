@@ -30,8 +30,12 @@ public:
 class Identifier : public Expression {
 private:
     std::string value;
+    
+
+    
 public:
     Identifier(const char* v) : value(v) {}
+    
     std::string& get() {return value;}
 
     virtual Value eval(context::Context* cc) override;
@@ -40,8 +44,13 @@ public:
 class Number : public Expression {
 private:
     std::string value;
+    int ivalue;
+    double dvalue;
+    int x = 0;
 public:
     Number(const char* val) : value(val) {}
+    Number(int ival) : ivalue(ival) {x = 1;}
+    Number(double dvalue) : dvalue(dvalue) {x = 2;}
     virtual Value eval(context::Context* cc) override;
 
 };

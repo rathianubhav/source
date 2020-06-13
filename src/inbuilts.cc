@@ -11,7 +11,9 @@ inbuilts =
     new System(),
     new Fopen(),
     new Fclose(),
-    new Fgetc()
+    new Fputc(),
+    new Fgetc(),
+    new Range()
 };
 
 Value
@@ -114,4 +116,50 @@ Fgetc::run(std::vector<Value> args)
     }
 
     return Value(false);
+}
+
+Value
+Fputc::run(std::vector<Value> args)
+{
+    FILE* fptr;
+    if (args.at(0).getType() != ANY_T) {
+        return Value(false);
+    }
+
+    fptr = (FILE*)args.at(0).Any();
+    if (fptr) {
+        fputc(args.at(1).Str()[0],fptr);
+        return Value(true);
+    }
+
+    return Value(false);
+}
+
+Value
+Range::run(std::vector<Value> args)
+{
+    auto arr = new std::vector<Expression*>();
+    switch (args.at(0).getType()) {
+        case INT_T:
+            for(int i = 0; i < args.at(0).Int(); i++) {
+                arr->push_back(new Number(i));
+            }
+
+            break;
+
+        case FLOAT_T:
+            for(double i = 0; i < args.at(0).Float(); i++) {
+                arr->push_back(new Number(i));
+            }
+
+            break;
+
+        case STR_T:
+            for(auto i : args.at(0).Str()) {
+                arr->push_back(new String(std::string(1, i).c_str()));
+            }
+            break;
+    }
+
+    return Value(arr);
 }
