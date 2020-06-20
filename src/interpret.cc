@@ -2,7 +2,6 @@
 #include <inbuilts.h>
 extern bool error;
 extern bool isdebug;
-
 int yyparse();
 std::vector<Statment*> *tree;
 extern std::vector<InBuilt*> inbuilts;
@@ -190,56 +189,67 @@ Value
 Call::eval(context::Context* cc)
 {
     Closure func = id->eval(cc).Func();
-    source::ST* funenv = new source::ST(func.env);
-
-    funenv->bind("ret", Value());
+    auto fc = source::context::init(func.env);
+    
     auto func_req_args = func.func->get_args();
 
+    fc->st->bind("ret", Value());
     int fnc = func_req_args->size(),
         clc = arg->size();
 
     int min = fnc < clc ? fnc : clc;
     for(int i = 0; i < min; i++) {
-        funenv->bind(func_req_args->at(i)->get(), arg->at(i)->eval(cc));
+        fc->st->bind(func_req_args->at(i)->get(), arg->at(i)->eval(cc));
     }
 
     if (fnc > min) {
         for(int i = min; i < fnc; i++) {
-            funenv->bind(func_req_args->at(i)->get(), Value());
+            fc->st->bind(func_req_args->at(i)->get(), Value());
         }
     } else if (clc > min) {
         for(int i = min; i < clc; i++) {
-            funenv->bind("__extra_" + std::to_string((i - min) + 1) + "__", arg->at(i)->eval(cc));
+            fc->st->bind("__extra_" + std::to_string((i - min) + 1) + "__", arg->at(i)->eval(cc));
         }
     }
 
-    auto fc = source::context::init(funenv);
-
-    func.func->get_body()->exec(fc);
     
-    return funenv->lookup("ret");
+    fc->func_count++;
+    func.func->get_body()->exec(fc);
+    fc->func_count--;
+    return fc->st->lookup("ret");
 }
 
-void
+int
 Block::exec(context::Context* cc)
 {
     for(auto a : *body) {
-        a->exec(cc);
+        auto l = a->exec(cc);
+        if (l) {
+            if (l == RET_STMT && cc->func_count) return l;
+            if ((l == BREAK_STMT || l == CONT_STMT) && cc->loop_count) {
+                std::cout << "breaking or cont "  << l << std::endl;
+                return l;
+            }
+            std::cout << "not return l" << std::endl;
+        }
     }
+    return 0;
 }
 
-void
+int
 Condition::exec(context::Context* cc)
-{
-    if (expr->eval(cc).Bool()) {
-        ifblock->exec(cc);
-    } else if (elseBlock != nullptr) {
-        elseBlock->exec(cc);
+{   
+    auto a = expr->eval(cc);
+    switch (a.getType()) {
+        case BOOL_T: if (a.Bool()) return ifblock->exec(cc);
+        case INT_T: if (a.Int() != 0) return ifblock->exec(cc);
+        case FLOAT_T: if (a.Float() != 0.0) return  ifblock->exec(cc);
     }
+    if (elseBlock != nullptr) return elseBlock->exec(cc);
 }
 
 
-void
+int
 Loop::exec(context::Context* cc)
 {
     switch(type) {
@@ -257,56 +267,69 @@ Loop::exec(context::Context* cc)
             }
 
             int x = 0;
+            cc->loop_count++;
             for(auto a : *arr->eval(cc).Arr()) {
                 cc->st->rebind(id->get(), Value(a->eval(cc)));
-                body->exec(cc);
+                int l = body->exec(cc);
+                if (l) {
+                    if (l == BREAK_STMT) goto outloop;
+                }
+                
             }
+            outloop:
+            cc->loop_count--;
             break;
         }
 
     }
+
+    return 0;
 }
 
 
-void
+int
 Let::exec(context::Context* cc)
 {
     cc->st->bind(id->get(), expr->eval(cc));
+    return 0;
 }
 
 
-void
+int
 Assign::exec(context::Context* cc)
 {
     cc->st->rebind(id->get(), expr->eval(cc));
+    return 0;
 }
 
-void
+int
 Print::exec(context::Context* cc)
 {
     for(auto a : *expr) {
         a->eval(cc).repr(std::cout);
     }
+    return 0;
 }
-
-void
+int
 Println::exec(context::Context* cc)
 {
    for(auto a : *expr) {
         a->eval(cc).repr(std::cout);
     }
     std::cout << std::endl;
+    return 0;
 }
 
-void
+int
 ExpressionStatment::exec(context::Context* cc)
 {
     body->eval(cc);
+    return 0;
 }
 
 extern "C" FILE *yyin;
 
-void
+int
 Use::exec(context::Context* cc)
 {
     auto oldptr = yyin;
@@ -363,4 +386,14 @@ Use::exec(context::Context* cc)
     delete modcc;
 
     yyin = oldptr;
+
+    return 0;
+}
+
+
+int
+Return::exec(context::Context* cc)
+{
+    cc->st->rebind("ret", expr->eval(cc));
+    return RET_STMT;
 }

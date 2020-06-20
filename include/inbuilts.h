@@ -21,7 +21,7 @@ public:
             inargs->push_back(new Identifier(a.c_str()));
         }
     }
-    virtual void exec(context::Context* cc) override {
+    virtual int exec(context::Context* cc) override {
 
         std::vector<Value> args;
         for(auto a : *inargs) {
@@ -35,6 +35,8 @@ public:
 
         auto r = run(args);
         cc->st->rebind("ret",r);
+
+        return 0;
     }
 
 
@@ -121,6 +123,16 @@ public:
     Range() {
         id = "range";
         set_args_count(1);
+    }
+
+    virtual Value run(std::vector<Value> args) override;
+};
+
+class Append : public InBuilt {
+public:
+    Append() {
+        id = "append";
+        set_args_count(2);
     }
 
     virtual Value run(std::vector<Value> args) override;

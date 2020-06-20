@@ -91,19 +91,39 @@ public:
     }
 
     bool operator==(const Value& other) {
-        if (type != other.type) {
-            return false;
+
+        switch (type) {
+            case STR_T:
+                switch (other.type) {
+                    case STR_T: return !strcmp(value.Str->c_str(),other.value.Str->c_str());
+                    default:
+                        return false;
+                }
+            
+            case INT_T:
+                switch (other.type) {
+                    case INT_T: return value.Int == other.value.Int;
+                    default:
+                        return false;
+                }
+            
+            case FLOAT_T:
+                switch (other.type) {
+                    case FLOAT_T: return value.Float == other.value.Float;
+                    default:
+                        return false;
+                }
+
+            case BOOL_T:
+                switch (other.type) {
+                    case BOOL_T:    return value.Bool == other.value.Bool;
+                    default:
+                        return false;
+                }
+
+            case NONE_T:
+                return other.type == NONE_T;
         }
-        switch(type) {
-            case INT_T: return value.Int == other.value.Int;
-            case FLOAT_T: return value.Float == other.value.Float;
-            case BOOL_T: return value.Bool == other.value.Bool;
-            case STR_T: return value.Str ==  other.value.Str;
-            case FUNC_T: return false;
-            case NONE_T: return true;
-            case ANY_T: return value.Any == other.value.Any;
-        }
-        return false;
     }
 
     bool operator<(const Value& other) {

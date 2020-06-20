@@ -13,7 +13,8 @@ inbuilts =
     new Fclose(),
     new Fputc(),
     new Fgetc(),
-    new Range()
+    new Range(),
+    new Append()
 };
 
 Value
@@ -162,4 +163,22 @@ Range::run(std::vector<Value> args)
     }
 
     return Value(arr);
+}
+
+
+Value
+Append::run(std::vector<Value> args)
+{
+    if (args.at(0).getType() != ARRAY_T) {
+        err << "Can't append in none Arrary value" << std::endl;
+        return Value();
+    }
+    switch(args.at(1).getType()) {
+        case INT_T: args.at(0).Arr()->push_back(new Number(args.at(1).Int())); break;
+        case FLOAT_T: args.at(0).Arr()->push_back(new Number(args.at(1).Float())); break;
+        case BOOL_T: args.at(0).Arr()->push_back(new Bool(args.at(1).Bool())); break;
+        case STR_T: args.at(0).Arr()->push_back(new String(args.at(1).Str().c_str())); break;
+    }
+
+    return Value(args.at(0));
 }
