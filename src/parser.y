@@ -37,7 +37,8 @@ void yyerror(const char* e);
 %right POSNEG
 
 %token<id> ID
-%token<expr> NUM BOOL STRING
+%token<str> STRING
+%token<expr> NUM BOOL
 
 %token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN USE SNULL IN CONT BREAK CONTINUE RET
 

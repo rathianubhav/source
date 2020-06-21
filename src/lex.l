@@ -3,6 +3,7 @@
 #include "../include/node.h"
 #include "parser.tab.h"
 
+
 Oper getOper(const char* s) {
     switch(s[0]) {
         case '=': return EQ;
@@ -13,12 +14,13 @@ Oper getOper(const char* s) {
     }
 }
 
-char* trim(char* str) {
+char* trim(char* str, char s) {
     char* toret = str;
-    while(toret[0] == '"') ++toret;
-    for(int i=0; toret[i] != '\0'; i++) if(toret[i] == '"') toret[i] = '\0';
+    while(toret[0] == s) ++toret;
+    for(int i=0; toret[i] != '\0'; i++) if(toret[i] == s) toret[i] = '\0';
     return toret;
 }
+
 
 
 %}
@@ -66,8 +68,10 @@ true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 [ \t\v\n\r\f] ;
 [a-zA-Z_][a-zA-Z_0-9]* yylval.id = new Identifier(yytext); return ID;
 ([0-9]*[.])?[0-9]+ yylval.num = new Number(yytext); return NUM;
-["][^"]*["] yylval.str = new String(trim(yytext)); return STRING;
+["][^"]*["] yylval.str = new String(trim(yytext, '"')); return STRING;
 "#!".* ;
+"/*"((\*+[^/*])|([^*]))*\**"*/" ;
+"//".* ;
 . std::cout << "err[lex]: unknow token starting with " << yytext << std::endl;
 
 %%

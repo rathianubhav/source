@@ -24,7 +24,7 @@ public:
 
 class Expression : public Node {
 public:
-    virtual Value eval(context::Context* cc) {
+    virtual Value eval(context::Context& cc) {
         err << "err[node]: eval not yet implemented in " << typeid(*this).name() << std::endl;
         return Value();
     }
@@ -41,7 +41,7 @@ public:
     
     std::string& get() {return value;}
 
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 };
 
 class Number : public Expression {
@@ -54,7 +54,7 @@ public:
     Number(const char* val) : value(val) {}
     Number(int ival) : ivalue(ival) {x = 1;}
     Number(double dvalue) : dvalue(dvalue) {x = 2;}
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 
 };
 
@@ -63,7 +63,7 @@ private:
     bool value;
 public:
     Bool(bool val) : value(val) {}
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 
 };
 
@@ -72,7 +72,7 @@ private:
     std::string value;
 public:
     String(const char* s) : value(s) {}
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 };
 
 
@@ -83,8 +83,19 @@ private:
 public:
     Array(std::vector<Expression*> *exprs) : exprs(exprs) {}
     Array(Identifier* id) : id(id) {}
-    void respr(context::Context* cc, std::ostream& out);
-    virtual Value eval(context::Context* cc) override;
+    void respr(context::Context& cc, std::ostream& out);
+    virtual Value eval(context::Context& cc) override;
+
+    virtual ~Array() {
+        if (id) {
+            delete id;
+        } else {
+            for (auto a : *exprs) {
+                delete a;
+            }
+            exprs->clear();
+        }
+    }
 };
 
 
@@ -92,7 +103,7 @@ class Null : public Expression {
 private:
 public:
     Null() {}
-    virtual Value eval(context::Context* cc) override {
+    virtual Value eval(context::Context& cc) override {
         return Value();
     }
 };
@@ -103,7 +114,7 @@ private:
     Expression* expr;
 public:
     Access(Identifier* id,Expression* expr) : id(id), expr(expr) {}
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 };
 
 class Container : public Expression {
@@ -111,7 +122,7 @@ private:
     std::vector<dict*> *value;
 public:
     Container(std::vector<dict*> *value) : value(value) {}
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 };
 
 class ContainerEval : public Expression {
@@ -121,7 +132,7 @@ private:
 public:
     ContainerEval(Expression* cont, Identifier* var) : cont(cont), var(var) {}
 
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 };
 
 
@@ -133,7 +144,7 @@ public:
     Arithmetic(Expression*left, Oper op, Expression* right)
     :   left(left), op(op), right(right) {}
 
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 
     virtual ~Arithmetic() { delete left; delete right;}
 };
@@ -146,7 +157,7 @@ public:
     Logical(Expression*left, Oper op, Expression* right)
     :   left(left), op(op), right(right) {}
 
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 
     virtual ~Logical() { delete left; delete right;}
 };
@@ -159,7 +170,7 @@ public:
     Compare(Expression*left, Oper op, Expression* right)
     :   left(left), op(op), right(right) {}
 
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 
     virtual ~Compare() { delete left; delete right;}
 };
@@ -170,7 +181,7 @@ private:
     Expression *expr;
 public:
     Negation(Expression* expr) : expr(expr) {}
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 
     virtual ~Negation() { delete expr;}
 };
@@ -179,8 +190,9 @@ class Statment : public Node {
 private:
 public:
     Statment() {}
-    virtual int exec(context::Context *cc) {
+    virtual int exec(context::Context& cc) {
         err << "err[node] exec() not yet implemented for " << typeid(*this).name() << std::endl; 
+        return 0;
     }
 };
 
@@ -190,7 +202,7 @@ private:
 public:
     Block(std::vector<Statment*> *body) : body(body) {}
     std::vector<Statment*> *get_body() {return body;}
-    virtual int exec(context::Context* cc) override;
+    virtual int exec(context::Context& cc) override;
     virtual ~Block() {
         for(auto b : *body) {
             delete b;
@@ -203,13 +215,13 @@ public:
 class Condition : public Statment {
 private:
     Expression* expr;
-    Statment* ifblock, *elseBlock;
+    Block* ifblock, *elseBlock;
 
 public:
-    Condition(Expression* expr, Statment* ib, Statment* eb = nullptr)
+    Condition(Expression* expr, Block* ib, Block* eb = nullptr)
     : expr(expr), ifblock(ib), elseBlock(eb) {}
 
-    virtual int exec(context::Context *cc) override;
+    virtual int exec(context::Context& cc) override;
     virtual ~Condition() {
         delete expr;
         delete ifblock;
@@ -238,7 +250,7 @@ public:
     Loop(Identifier* id, Expression* arr, Block* body)
         : id(id), arr(arr), body(body), type(INLOOP) {}
 
-    virtual int exec(context::Context* cc) override;
+    virtual int exec(context::Context& cc) override;
     virtual ~Loop() {
         if (expr) delete expr;
         if (body) delete body;
@@ -252,14 +264,14 @@ class Break : public Statment {
 private:
 public:
     Break() {}
-    virtual int exec(context::Context*cc) { return BREAK_STMT;}
+    virtual int exec(context::Context&cc) { return BREAK_STMT;}
 };
 
 class Continue : public Statment {
 private:
 public:
     Continue() {}
-    virtual int exec(context::Context*cc) { return CONT_STMT;}
+    virtual int exec(context::Context&cc) { return CONT_STMT;}
 };
 
 class Let : public Statment {
@@ -271,7 +283,7 @@ public:
     Let(Identifier* id, Expression* expr)
         : id(id), expr(expr) {}
 
-    virtual int exec(context::Context* cc) override;
+    virtual int exec(context::Context& cc) override;
 
     virtual ~Let() {
         delete id;
@@ -289,7 +301,7 @@ public:
     Assign(Identifier* id, Expression* expr)
         : id(id), expr(expr) {}
 
-    virtual int exec(context::Context* cc) override;
+    virtual int exec(context::Context& cc) override;
 
     virtual ~Assign() {
         delete id;
@@ -303,7 +315,7 @@ private:
 public:
     Print(std::vector<Expression*> *expr) : expr(expr) {}
 
-    virtual int exec(context::Context* cc) override;
+    virtual int exec(context::Context& cc) override;
     virtual ~Print() {
         for(auto a : *expr) {
             delete a;
@@ -319,7 +331,7 @@ private:
 public:
     Println(std::vector<Expression*> *expr) : expr(expr) {}
 
-    virtual int exec(context::Context* cc) override;
+    virtual int exec(context::Context& cc) override;
     virtual ~Println() {
         for(auto a : *expr) {
             delete a;
@@ -334,7 +346,7 @@ private:
 public:
     ExpressionStatment(Expression* body) : body(body) {}
 
-    virtual int exec(context::Context* cc) override;
+    virtual int exec(context::Context& cc) override;
     virtual ~ExpressionStatment() { delete body;}
 };
 
@@ -350,7 +362,7 @@ public:
     std::vector<Identifier*> *get_args() {return id;}
     Statment* get_body() {return body;}
 
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override { return Value(this, &cc.st);}
     virtual ~Method() {
         delete id;
         delete body;
@@ -363,7 +375,7 @@ private:
     Expression *id;
 public:
     Call(Expression* id, std::vector<Expression*> *a) : id(id), arg(a) {}
-    virtual Value eval(context::Context* cc) override;
+    virtual Value eval(context::Context& cc) override;
 
     virtual ~Call() {
         delete id;
@@ -381,7 +393,7 @@ private:
 public:
     Use(String* md) : modname(md) {}
 
-    virtual int exec(context::Context* cc) override;
+    virtual int exec(context::Context& cc) override;
     virtual ~Use() {
         delete modname;
     }
@@ -393,7 +405,7 @@ private:
 public:
     Return(Expression* expr) : expr(expr) {}
 
-    virtual int exec(context::Context* cc) override;
+    virtual int exec(context::Context& cc) override;
     virtual ~Return() {
         delete expr;
     }

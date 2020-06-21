@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
+#include <math.h>
 
 class Identifier;
 class Statment;
@@ -15,7 +16,7 @@ namespace source {
 
 class ST;
 
-enum Type { INT_T, FLOAT_T, BOOL_T, NONE_T, STR_T, ANY_T, FUNC_T, ARRAY_T, DICT_T};
+enum Type { INT_T, FLOAT_T, BOOL_T, NONE_T, STR_T, ANY_T, FUNC_T, ARRAY_T, DICT_T, POINT_T};
 
 
 typedef std::pair<Identifier*, Expression*> dict;
@@ -46,6 +47,7 @@ private:
     } value;
 
     Type type;
+    bool Constant = false;
 public:
 
     explicit Value()        { type = NONE_T; }
@@ -58,7 +60,7 @@ public:
     explicit Value(std::vector<Expression*> *arr) { type = ARRAY_T; value.Arr = arr;}
     explicit Value(Method* f, source::ST* env) { 
         type = FUNC_T;
-        value.Func.func =f;
+        value.Func.func = f;
         value.Func.env = env;
 
     }
@@ -69,6 +71,10 @@ public:
 
     Type getType() {return type;}
     void setType(Type t) {type = t;}
+
+    bool isContant() { return Constant;}
+
+    void set_modifier(bool f) { Constant = f;}
 
     int Int() {return value.Int;}
     double Float() {return value.Float;}
@@ -103,6 +109,7 @@ public:
             case INT_T:
                 switch (other.type) {
                     case INT_T: return value.Int == other.value.Int;
+                    case FLOAT_T: return (double)value.Int == roundf64(other.value.Float);
                     default:
                         return false;
                 }
@@ -110,6 +117,7 @@ public:
             case FLOAT_T:
                 switch (other.type) {
                     case FLOAT_T: return value.Float == other.value.Float;
+                    case INT_T: return roundf64(value.Float) == (double) other.value.Int;
                     default:
                         return false;
                 }
@@ -124,6 +132,7 @@ public:
             case NONE_T:
                 return other.type == NONE_T;
         }
+        return false;
     }
 
     bool operator<(const Value& other) {

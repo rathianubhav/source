@@ -1,0 +1,130 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "source",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#statments"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.source",
+				"match": "\\b(if|for|ret|in)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.source",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.source",
+					"match": "\\\\."
+				}
+			]
+		},
+		"statments": {
+			"patterns": [
+				{
+					"include": "#declaration"
+				},
+				{
+					"include": "#use-module"
+				},
+				{
+					"include": "#func-decl"
+				},
+				{
+					"include": "#func-call"
+				}
+			]
+		},
+		"declaration": {
+			"patterns": [
+				{
+					"include": "#var-expr"
+				}
+			]
+		},
+		"var-expr": {
+			"name": "meta.var.expr.source",
+			"begin": "(?:(\\const)\\s+)?\\b(let)\\b(?!\\$)",
+			"beginCaptures": {
+				"1": {
+					"name": "keyword.control.export.source"
+				},
+				"2": {
+					"name": "storage.type.source"
+				}
+			},
+			"end": "(?=$|:=|)"
+		},
+		"use-module": {
+			"name": "keyword.control.import.source",
+			"begin": "(^\\s*(use)\\b\\s+)",
+			"beginCaptures": {
+				"1": {
+					"patterns": [
+						{
+							"match": "use",
+							"name": "keyword.control.import.source"
+						}
+					]	
+				},
+				"2": {
+					"patterns": [
+						{
+							"match": "\\s+",
+							"name": "entity.name.tag.source"
+						}
+					]
+				}
+			},
+			"end": "(?=(?://|/\\*))|$"
+		},
+		"func-decl": {
+			"match": "(\\bfunc\\b)(?:\\s+(,)*\\s+)?",
+			"captures": {
+				"1": {
+					"name": "keyword.function.source"
+				},
+				"2": {
+					"patterns": [
+						{
+							"match": "\\w+",
+							"name": "entity.name.function.source"
+						}
+					]
+				}
+			}
+		},
+		"func-call": {
+			"match": "(\\w+)(?=\\()",
+			"captures": {
+				"1": {
+					"name": "keyword.function.source"
+				},
+				"2": {
+					"patterns": [
+						{
+							"match": "\\d\\w+",
+							"name": "invalid.illegal.idenifier.source"
+						},
+						{
+							"match": "\\w+",
+							"name": "support.function.source"
+						}
+					]
+				}
+			}
+		}
+	},
+	"scopeName": "source.src"
+}

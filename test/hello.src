@@ -1,11 +1,6 @@
-#!/bin/source
-
 let main := func args {
-	
-	for i in range(5) {
-		if i == 5 {
-			break;
-		}
-		println(i);
-	}
+    let fptr := fopen("test.go","r");
+    if fptr == null {
+        
+    }
 };

@@ -21,12 +21,12 @@ public:
             inargs->push_back(new Identifier(a.c_str()));
         }
     }
-    virtual int exec(context::Context* cc) override {
+    virtual int exec(context::Context& cc) override {
 
         std::vector<Value> args;
         for(auto a : *inargs) {
-            if (cc->st->defined(a->get())) {
-                args.push_back(cc->st->lookup(a->get()));
+            if (cc.st.defined(a->get())) {
+                args.push_back(cc.st.lookup(a->get()));
             } else {
                 args.push_back(Value("__undefine__"));
             }
@@ -34,7 +34,7 @@ public:
         }
 
         auto r = run(args);
-        cc->st->rebind("ret",r);
+        cc.st.rebind("ret",r);
 
         return 0;
     }
@@ -43,6 +43,9 @@ public:
     virtual Value run(std::vector<Value> args) = 0;
 
 };
+
+typedef InBuilt* create_inbuilt();
+typedef void destroy_inbuilt(InBuilt*);
 
 
 class Typeof : public InBuilt {
@@ -137,3 +140,14 @@ public:
 
     virtual Value run(std::vector<Value> args) override;
 };
+
+class CLib : public InBuilt {
+public:
+    CLib() {
+        id = "clib";
+        set_args_count(2);
+    }
+
+    virtual Value run(std::vector<Value> args) override;
+};
+

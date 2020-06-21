@@ -1,6 +1,7 @@
 #include <inbuilts.h>
 #include <time.h>
 #include <memory>
+#include <dlfcn.h>
 
  /* InBuilts */
 std::vector<InBuilt*> 
@@ -14,7 +15,8 @@ inbuilts =
     new Fputc(),
     new Fgetc(),
     new Range(),
-    new Append()
+    new Append(),
+    new CLib(),
 };
 
 Value
@@ -181,4 +183,31 @@ Append::run(std::vector<Value> args)
     }
 
     return Value(args.at(0));
+}
+
+
+Value
+CLib::run(std::vector<Value> args)
+{
+
+    void* handler = dlopen(args.at(0).Str().c_str(), RTLD_LAZY);
+    if (!handler) {
+        std::cout << "can't load library: " << dlerror() << std::endl;
+        return Value(false);
+    }
+
+    create_inbuilt* built_func = (create_inbuilt*) dlsym(handler, (args.at(1).Str() + "_create").c_str());
+    destroy_inbuilt* destroy_func = (destroy_inbuilt*) dlsym(handler, (args.at(1).Str() + "_destroy").c_str());
+
+    if (! built_func || !destroy_func) {
+        std::cout << "can't load symbol: " << dlerror() << std::endl;
+        return Value(false);
+    }
+
+    InBuilt* func = built_func();
+    auto retval = func->run(args);
+
+    destroy_func(func);
+
+    return retval;
 }

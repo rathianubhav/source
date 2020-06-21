@@ -2,20 +2,22 @@
 #include <inbuilts.h>
 extern bool error;
 extern bool isdebug;
+
 int yyparse();
 std::vector<Statment*> *tree;
 extern std::vector<InBuilt*> inbuilts;
+
+
 void 
 source::interpreter::interprete(std::vector<std::string> args, bool debug) {
     yyparse();
 
     int count = 0;
 
-    auto cc = source::context::init(nullptr);
-
+    source::context::Context cc;
    
     for(auto a : inbuilts) {
-        cc->st->bind(a->getID(), Value(a, nullptr));
+        cc.st.bind(a->getID(), Value(a, nullptr));
     }
 
     for (auto s : *tree) {
@@ -26,7 +28,7 @@ source::interpreter::interprete(std::vector<std::string> args, bool debug) {
         s->exec(cc);
     }
 
-    if (!cc->st->defined("main")) {
+    if (!cc.st.defined("main")) {
         err << "no main function defined" << std::endl;
         return;
     }
@@ -36,7 +38,7 @@ source::interpreter::interprete(std::vector<std::string> args, bool debug) {
         v->push_back(new String(a.c_str()));
     }
 
-    auto main_func = cc->st->lookup("main").Func();
+    auto main_func = cc.st.lookup("main").Func();
     auto ar = main_func.func->get_args();
     main_func.env->bind(ar->at(0)->get(), Value(v));
     main_func.func->get_body()->exec(cc);
@@ -44,13 +46,13 @@ source::interpreter::interprete(std::vector<std::string> args, bool debug) {
 
 
 Value
-Identifier::eval(context::Context* cc)
+Identifier::eval(context::Context& cc)
 {
-    return cc->st->lookup(value);
+    return cc.st.lookup(value);
 }
 
 Value
-Number::eval(context::Context* cc)
+Number::eval(context::Context& cc)
 {
     switch(x) {
         case 1: return Value(ivalue);
@@ -63,30 +65,30 @@ Number::eval(context::Context* cc)
 }
 
 Value
-Bool::eval(context::Context* cc)
+Bool::eval(context::Context& cc)
 {
     return Value(value);
 }
 
 Value
-String::eval(context::Context* cc)
+String::eval(context::Context& cc)
 {
     return Value((char*)value.c_str());
 }
 
 Value
-Array::eval(context::Context* cc)
+Array::eval(context::Context& cc)
 {
     if (id) {
-        return Value(cc->st->lookup(id->get()));
+        return Value(cc.st.lookup(id->get()));
     }
     return Value(exprs);
 }
 
 Value
-Access::eval(context::Context* cc)
+Access::eval(context::Context& cc)
 {
-    auto arr = cc->st->lookup(id->get());
+    auto arr = cc.st.lookup(id->get());
     if (arr.getType() != ARRAY_T) {
         err << "err[key]: not a iterable object" << std::endl;
         return Value();
@@ -99,13 +101,13 @@ Access::eval(context::Context* cc)
 }
 
 Value
-Container::eval(context::Context* cc)
+Container::eval(context::Context& cc)
 {
     return Value(value);
 }
 
 Value
-ContainerEval::eval(context::Context* cc)
+ContainerEval::eval(context::Context& cc)
 {
     auto d = cont->eval(cc).Dict();
     for(auto i = d->begin(); i != d->end(); i++) {
@@ -119,7 +121,7 @@ ContainerEval::eval(context::Context* cc)
 }
 
 void
-Array::respr(context::Context* cc, std::ostream& out)
+Array::respr(context::Context& cc, std::ostream& out)
 {
     for (auto a : *exprs) {
         a->eval(cc).repr(out);
@@ -127,7 +129,7 @@ Array::respr(context::Context* cc, std::ostream& out)
 }
 
 Value
-Arithmetic::eval(context::Context* cc)
+Arithmetic::eval(context::Context& cc)
 {
     auto l = left->eval(cc);
     auto r = right->eval(cc);
@@ -145,7 +147,7 @@ Arithmetic::eval(context::Context* cc)
 }
 
 Value
-Logical::eval(context::Context* cc)
+Logical::eval(context::Context& cc)
 {
     auto l = left->eval(cc).Bool();
     auto r = right->eval(cc).Bool();
@@ -154,10 +156,11 @@ Logical::eval(context::Context* cc)
         case AND:   return Value(l && r);
         case OR:   return Value(l || r);
     }
+    return Value(false);
 }
 
 Value
-Compare::eval(context::Context* cc)
+Compare::eval(context::Context& cc)
 {
     auto l = left->eval(cc);
     auto r = right->eval(cc);
@@ -170,87 +173,80 @@ Compare::eval(context::Context* cc)
         case LE: return Value((l == r) || (l < r));
         case GE: return Value((l == r) || !(l < r));
     }
+    return Value(false);
 }
 
 Value
-Negation::eval(context::Context* cc)
+Negation::eval(context::Context& cc)
 {
     return Value(! expr->eval(cc).Bool());
 }
 
-
 Value
-Method::eval(context::Context* cc)
-{
-    return Value(this, cc->st);
-}
-
-Value
-Call::eval(context::Context* cc)
+Call::eval(context::Context& cc)
 {
     Closure func = id->eval(cc).Func();
-    auto fc = source::context::init(func.env);
+    auto fc = source::context::Context(*func.env);
     
     auto func_req_args = func.func->get_args();
 
-    fc->st->bind("ret", Value());
+    fc.st.bind("ret", Value());
     int fnc = func_req_args->size(),
         clc = arg->size();
 
     int min = fnc < clc ? fnc : clc;
     for(int i = 0; i < min; i++) {
-        fc->st->bind(func_req_args->at(i)->get(), arg->at(i)->eval(cc));
+        fc.st.bind(func_req_args->at(i)->get(), arg->at(i)->eval(cc));
     }
 
     if (fnc > min) {
         for(int i = min; i < fnc; i++) {
-            fc->st->bind(func_req_args->at(i)->get(), Value());
+            fc.st.bind(func_req_args->at(i)->get(), Value());
         }
     } else if (clc > min) {
         for(int i = min; i < clc; i++) {
-            fc->st->bind("__extra_" + std::to_string((i - min) + 1) + "__", arg->at(i)->eval(cc));
+            fc.st.bind("__extra_" + std::to_string((i - min) + 1) + "__", arg->at(i)->eval(cc));
         }
     }
 
     
-    fc->func_count++;
+    fc.func_count++;
     func.func->get_body()->exec(fc);
-    fc->func_count--;
-    return fc->st->lookup("ret");
+    fc.func_count--;
+    return fc.st.lookup("ret");
 }
 
 int
-Block::exec(context::Context* cc)
+Block::exec(context::Context& cc)
 {
     for(auto a : *body) {
         auto l = a->exec(cc);
         if (l) {
-            if (l == RET_STMT && cc->func_count) return l;
-            if ((l == BREAK_STMT || l == CONT_STMT) && cc->loop_count) {
-                std::cout << "breaking or cont "  << l << std::endl;
-                return l;
-            }
-            std::cout << "not return l" << std::endl;
+            if (l == RET_STMT && cc.func_count) return l;
+            if ((l == BREAK_STMT || l == CONT_STMT) && cc.loop_count) return l;
         }
     }
     return 0;
 }
 
 int
-Condition::exec(context::Context* cc)
+Condition::exec(context::Context& cc)
 {   
     auto a = expr->eval(cc);
-    switch (a.getType()) {
-        case BOOL_T: if (a.Bool()) return ifblock->exec(cc);
-        case INT_T: if (a.Int() != 0) return ifblock->exec(cc);
-        case FLOAT_T: if (a.Float() != 0.0) return  ifblock->exec(cc);
+    if (a.getType() == BOOL_T && a.Bool())        return ifblock->exec(cc);
+    else if (a.getType() == INT_T && a.Int())     return ifblock->exec(cc);
+    else if (a.getType() == FLOAT_T && a.Float()) return ifblock->exec(cc);
+    if (elseBlock != nullptr) {
+        std::cout << "executing else block" << std::endl;
+        return elseBlock->exec(cc);
     }
-    if (elseBlock != nullptr) return elseBlock->exec(cc);
+
+    return 0;
 }
 
 
 int
-Loop::exec(context::Context* cc)
+Loop::exec(context::Context& cc)
 {
     switch(type) {
         case UNTIL: 
@@ -260,16 +256,16 @@ Loop::exec(context::Context* cc)
             break;
         case INLOOP: {
             Value backup;
-            if (cc->st->defined(id->get())) {
-                backup = cc->st->lookup(id->get());
+            if (cc.st.defined(id->get())) {
+                backup = cc.st.lookup(id->get());
             } else {
-                cc->st->bind(id->get(), Value());
+                cc.st.bind(id->get(), Value());
             }
 
             int x = 0;
-            cc->loop_count++;
+            cc.loop_count++;
             for(auto a : *arr->eval(cc).Arr()) {
-                cc->st->rebind(id->get(), Value(a->eval(cc)));
+                cc.st.rebind(id->get(), Value(a->eval(cc)));
                 int l = body->exec(cc);
                 if (l) {
                     if (l == BREAK_STMT) goto outloop;
@@ -277,7 +273,7 @@ Loop::exec(context::Context* cc)
                 
             }
             outloop:
-            cc->loop_count--;
+            cc.loop_count--;
             break;
         }
 
@@ -288,22 +284,22 @@ Loop::exec(context::Context* cc)
 
 
 int
-Let::exec(context::Context* cc)
+Let::exec(context::Context& cc)
 {
-    cc->st->bind(id->get(), expr->eval(cc));
+    cc.st.bind(id->get(), expr->eval(cc));
     return 0;
 }
 
 
 int
-Assign::exec(context::Context* cc)
+Assign::exec(context::Context& cc)
 {
-    cc->st->rebind(id->get(), expr->eval(cc));
+    cc.st.rebind(id->get(), expr->eval(cc));
     return 0;
 }
 
 int
-Print::exec(context::Context* cc)
+Print::exec(context::Context& cc)
 {
     for(auto a : *expr) {
         a->eval(cc).repr(std::cout);
@@ -311,7 +307,7 @@ Print::exec(context::Context* cc)
     return 0;
 }
 int
-Println::exec(context::Context* cc)
+Println::exec(context::Context& cc)
 {
    for(auto a : *expr) {
         a->eval(cc).repr(std::cout);
@@ -321,7 +317,7 @@ Println::exec(context::Context* cc)
 }
 
 int
-ExpressionStatment::exec(context::Context* cc)
+ExpressionStatment::exec(context::Context& cc)
 {
     body->eval(cc);
     return 0;
@@ -330,7 +326,7 @@ ExpressionStatment::exec(context::Context* cc)
 extern "C" FILE *yyin;
 
 int
-Use::exec(context::Context* cc)
+Use::exec(context::Context& cc)
 {
     auto oldptr = yyin;
 
@@ -353,19 +349,19 @@ Use::exec(context::Context* cc)
 
     if (!releax::is_exist(mod)) {
         err << mod << " not exist" << std::endl;
-        return;
+        return 0;
     }
 
     yyin = fopen(mod.c_str(), "r");
     yyparse();
 
-    auto modcc = source::context::init(cc->st);
+    auto modcc = source::context::Context(cc.st);
     for(auto c : *tree) {
         c->exec(modcc);
     }
 
     auto d = new std::vector<dict*>();
-    for(auto s : modcc->st->bindings) {
+    for(auto s : modcc.st.bindings) {
         auto val = s.second;
         auto x = new dict();
         x->first = new Identifier(s.first.c_str());
@@ -381,9 +377,7 @@ Use::exec(context::Context* cc)
         d->push_back(x);
     }
 
-    cc->st->bind(mod_name, Value(d));
-    //fclose(yyin);
-    delete modcc;
+    cc.st.bind(mod_name, Value(d));
 
     yyin = oldptr;
 
@@ -392,8 +386,8 @@ Use::exec(context::Context* cc)
 
 
 int
-Return::exec(context::Context* cc)
+Return::exec(context::Context& cc)
 {
-    cc->st->rebind("ret", expr->eval(cc));
+    cc.st.rebind("ret", expr->eval(cc));
     return RET_STMT;
 }
