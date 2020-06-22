@@ -33,9 +33,6 @@ char* trim(char* str, char s) {
 
 [+-] yylval.op = (yytext[0] == '+' ? ADD : SUB); return OPA;
 [*/] yylval.op = (yytext[0] == '*' ? MUL : DIV); return OPM;
-and|or yylval.op = (yytext[0] == 'a' ? AND : OR); return BOP;
-not yylval.op = NOT; return NOTTOK;
-":=" return ASSIGN;
 "." return '.';
 "(" return '(';
 ")" return ')';
@@ -48,27 +45,27 @@ not yylval.op = NOT; return NOTTOK;
 "," return ',';
 
 [><]|([><!=]=) yylval.op = getOper(yytext); return COMP;
-true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 
-"use" return USE;
+"int" return INT;
+
+"u8" return U8;
+"u16" return U16;
+"u32" return U32;
+"u64" return U64;
+
+"i8" return I8;
+"i16" return I16;
+"i32" return I32;
+"i64" return I64;
+
+"bool" return BOOL;
 "func" return FUNC;
-"cont" return CONT;
-"let" return LET;
-"if" return IF;
-"else" return ELSE;
-"for" return FOR;
-"print" return PRINT;
-"println" return PRINTLN;
-"null" return SNULL;
-"in" return IN;
-"break" return BREAK;
-"continue" return CONTINUE;
+"extern" return EXTERN;
 "ret" return RET;
 
 [ \t\v\n\r\f] ;
 [a-zA-Z_][a-zA-Z_0-9]* yylval.id = new Identifier(yytext); return ID;
 ([0-9]*[.])?[0-9]+ yylval.num = new Number(yytext); return NUM;
-["][^"]*["] yylval.str = new String(trim(yytext, '"')); return STRING;
 "#!".* ;
 "/*"((\*+[^/*])|([^*]))*\**"*/" ;
 "//".* ;

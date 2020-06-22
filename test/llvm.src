@@ -1,0 +1,4 @@
+func main(ac i32) i32 {
+	ret 5;
+}
+

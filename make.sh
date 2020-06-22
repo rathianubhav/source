@@ -9,6 +9,6 @@ echo "compiling parser"
 bison -d parser.y
 
 echo "building source"
-g++ -std=c++11 -Wno-write-strings -fpermissive -lrbase -ldl  -ggdb -fmax-errors=3 -O2 *.cc *.c -I ../include -o ../build/source
+g++ -std=c++14 `llvm-config --cxxflags --ldflags --system-libs --libs core` -lrbase -Wno-write-strings -fpermissive  -ggdb -O2 *.cc *.c -I ../include -o ../build/source
 
 rm *.tab.* *.yy.*

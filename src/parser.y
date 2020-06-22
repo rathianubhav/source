@@ -1,12 +1,11 @@
 %code requires {
 
 #include "../include/node.h"
-
 using namespace source;
 int yylex(void);
 int yylex_destroy();
 
-extern std::vector<Statment*> *tree;
+extern std::vector<TopLevel*> *tree;
 
 void yyerror(const char* e);
 
@@ -15,18 +14,17 @@ void yyerror(const char* e);
 %define parse.error verbose
 
 %union {
-    Identifier* id;
-    Expression *expr;
-    String* str;
-    Statment* stmt;
-    Block* block;
-    std::vector<Statment*> *arr;
-    std::vector<Expression*> *arrE;
-    std::vector<Identifier*> *arrI;
-    Number* num;
-    dict* adict;
-    std::vector<dict*>* arrD;
     Oper op;
+    Identifier* id;
+    Number* num;
+    Expression* expr;
+    TopLevel* toplevel;
+    Block* block;
+    Statment* stmt;
+    std::vector<Expression*> *arrE;
+    std::vector<Statment*> *arrS;
+    std::vector<TopLevel*> *arr;
+    DataType* type;
 };
 
 %left<op> BOP
@@ -37,83 +35,54 @@ void yyerror(const char* e);
 %right POSNEG
 
 %token<id> ID
-%token<str> STRING
-%token<expr> NUM BOOL
+%token<num> NUM
 
-%token FUNC ASSIGN LET FOR IF ELSE PRINT PRINTLN USE SNULL IN CONT BREAK CONTINUE RET
+%token FUNC EXTERN RET
 
+%token INT BOOL
+%token I8 I16 I32 I64 U8 U16 U32 U64
 
-%type<expr> value expr
-%type<expr> math_expr func_expr arr_expr cont_expr cont_eval
-%type<stmt> stmt
-%type<stmt> assign_stmt condit_stmt loop_stmt expr_stmt print_stmt use_stmt ret_stmt
+%type<toplevel> top_level proto func_def
+%type<arr> program top_levels
 %type<block> block
-%type<adict> arg_def
-
-%type<arr> program stmts
+%type<arrS> stmts args_list
 %type<arrE> exprs
-%type<arrI> ids
-%type<arrD> arg_defs
-
-%destructor {delete $$;} <block>
-%destructor {delete $$;} <stmt>
-%destructor {delete $$;} <expr>
-
+%type<stmt> stmt ret_stmt call_stmt arg
+%type<expr> expr val
+%type<type> type int_type
 %start program
 
 %%
 
 program
-: stmts {$$=$1; tree=$$;}
+: top_levels {$$=$1; tree=$$;}
 ;
 
-
-stmt
-: assign_stmt
-| condit_stmt
-| loop_stmt
-| expr_stmt
-| print_stmt
-| use_stmt
-| ret_stmt
-| BREAK ';' {$$=new Break();}
-| CONTINUE ';' {$$=new Continue();}
+top_levels
+: top_levels top_level {$$=$1; $$->push_back($2);}
+| {$$=new std::vector<TopLevel*>();}
 ;
 
-
-
-assign_stmt
-: LET ID ASSIGN expr ';' {$$=new Let($2, $4);}
-| ID ASSIGN expr ';' {$$=new Assign($1, $3);}
+top_level
+: proto ';'
+| func_def
 ;
 
-condit_stmt
-: IF expr block {$$=new Condition($2,$3);}
-| IF expr block ELSE block {$$=new Condition($2, $3, $5);}
+func_def
+: proto block {$$=new Method($1, $2);}
 ;
 
-
-loop_stmt
-: FOR expr block {$$=new Loop($2, $3);}
-| FOR ID IN expr block {$$=new Loop($2, $4, $5);}
+proto
+: FUNC ID '(' args_list ')' type {$$=new Prototype($2, $4, $6);}
 ;
 
-
-expr_stmt
-: expr ';' {$$=new ExpressionStatment($1);}
+args_list
+: args_list ',' arg {$$=$1; $$->push_back($3);}
+| arg {$$=new std::vector<Statment*>(); $$->push_back($1);}
 ;
 
-print_stmt
-: PRINT '(' exprs ')' ';' {$$=new Print($3);}
-| PRINTLN '(' exprs ')' ';' {$$=new Println($3);}
-;
-
-ret_stmt
-: RET expr ';' {$$=new Return($2);}
-;
-
-use_stmt
-: USE STRING ';' {$$=new Use($2);}
+arg
+: ID type {$$=new Argument($1, $2);}
 ;
 
 block
@@ -125,70 +94,53 @@ stmts
 | {$$=new std::vector<Statment*>();}
 ;
 
+
+stmt
+: ret_stmt
+| call_stmt
+;
+
+
+ret_stmt
+: RET expr ';' {$$=new Return($2);}
+;
+
+call_stmt
+: ID '(' exprs ')' {$$=new Call($1, $3);}
+;
+
 expr
-: math_expr
-| func_expr
-| value
-| '(' expr ')' {$$=$2;}
-| arr_expr
-| cont_expr
-| SNULL {$$=new Null();}
-| ID '[' expr ']' {$$=new Access($1, $3);}
-| cont_eval
-;
-
-
-math_expr
-: expr COMP expr {$$=new Compare($1, $2, $3);}
-| expr OPA expr {$$=new Arithmetic($1, $2, $3);}
+: expr OPA expr {$$=new Arithmetic($1, $2, $3);}
 | expr OPM expr {$$=new Arithmetic($1, $2, $3);}
-| expr BOP expr {$$=new Logical($1, $2, $3);}
-| NOTTOK expr {$$=new Negation($2);}
+| val
 ;
 
-func_expr
-: FUNC ids block {$$=new Method($2, $3);}
-| expr '(' exprs ')' {$$=new Call($1, $3);}
-;
 
 exprs
-: exprs ',' expr {$$=$1; $$->push_back($3);}
-| expr {$$=new std::vector<Expression*>(); $$->push_back($1);}
-| /* blank */ {$$=new std::vector<Expression*>();}
+: exprs expr {$$=$1; $$->push_back($2);}
+| {$$=new std::vector<Expression*>();}
 ;
 
-cont_expr
-: CONT '{' arg_defs '}' {$$=new Container($3);}
-;
-
-cont_eval
-: expr '.' ID {$$=new ContainerEval($1, $3);}
-;
-
-arg_defs
-: arg_defs ',' arg_def {$$=$1; $1->push_back($3);}
-| arg_def {$$=new std::vector<dict*>(); $$->push_back($1);}
-
-arg_def
-: ID ':' expr {$$=new dict($1, $3);}
-;
-
-ids
-: ids ',' ID {$$=$1; $$->push_back($3);}
-| ID {$$=new std::vector<Identifier*>(); $$->push_back($1);}
-| /* blank */ {$$=new std::vector<Identifier*>();}
-;
-
-
-arr_expr
-: '[' exprs ']' {$$=new Array($2);}
-;
-
-value
+val
 : ID {$$=$1;}
 | NUM {$$=$1;}
-| STRING {$$=$1;}
-| BOOL {$$=$1;}
+;
+
+type
+: int_type
+| INT {$$=new IntType();}
+;
+
+int_type
+: U8 {$$=new IntType(8, 0);}
+| U16 {$$=new IntType(16, 0);}
+| U32 {$$=new IntType(32, 0);}
+| U64 {$$=new IntType(64, 0);}
+| I8 {$$=new IntType(8, 1);}
+| I16 {$$=new IntType(16, 1);}
+| I32 {$$=new IntType(32, 1);}
+| I64 {$$=new IntType(64, 1);}
+| BOOL {$$=new IntType(1);}
 ;
 
 %%

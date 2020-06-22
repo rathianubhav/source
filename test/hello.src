@@ -1,6 +1,0 @@
-let main := func args {
-    let fptr := fopen("test.go","r");
-    if fptr == null {
-        
-    }
-};

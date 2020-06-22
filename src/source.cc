@@ -1,12 +1,14 @@
-#include <interpreter.h>
 #include <fstream>
 #include <vector>
+#include <node.h>
 #include <releax>
 
 source::out::stream err(2, 31);
 source::out::stream debug(1, 34);
 
 extern "C" FILE *yyin;
+std::vector<TopLevel*> *tree;
+int yyparse();
 
 bool isdebug = false;
 int
@@ -20,7 +22,16 @@ source_main(releax::cli& app)
            yyin = fopen(filename.c_str(), "r");
        }
     }
-    source::interpreter::interprete(app.args, isdebug);
+    yyparse();
+
+    source::context::Context cc;
+
+    cc.lm = std::make_unique<llvm::Module>("my cool jit", cc.lc);
+    for(auto a: *tree) {
+        a->codegen(cc);
+    }
+
+    cc.lm->print(llvm::errs(), nullptr);
 
     return 0;
 }
