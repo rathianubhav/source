@@ -16,6 +16,10 @@ public:
     int func_count = 0;
     int loop_count = 0;
 
+    llvm::BasicBlock* currentBlock = nullptr;
+
+    std::map<std::string, llvm::AllocaInst*> Table;
+
     Context() : st(nullptr), lb(lc) {}
 
     Context(source::ST &s) : st(st), lb(lc) { }

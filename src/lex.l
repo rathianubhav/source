@@ -31,6 +31,7 @@ char* trim(char* str, char s) {
 
 %%
 
+":=" return ASSIGN;
 [+-] yylval.op = (yytext[0] == '+' ? ADD : SUB); return OPA;
 [*/] yylval.op = (yytext[0] == '*' ? MUL : DIV); return OPM;
 "." return '.';
@@ -61,6 +62,7 @@ char* trim(char* str, char s) {
 "bool" return BOOL;
 "func" return FUNC;
 "extern" return EXTERN;
+"let" return LET;
 "ret" return RET;
 
 [ \t\v\n\r\f] ;

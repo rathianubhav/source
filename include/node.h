@@ -179,3 +179,19 @@ public:
     }
 };
 
+
+class Let : public Statment {
+private:
+    Identifier* id;
+    DataType *t;
+    Expression* expr;
+public:
+    Let(Identifier* id, DataType* t, Expression *expr = nullptr)
+    : id(id), t(t), expr(expr) {}
+
+    virtual llvm::Value* codegen(context::Context &cc) override;
+
+    virtual ~Let() {
+        delete id, t, expr;
+    }
+};

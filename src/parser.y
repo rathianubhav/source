@@ -37,8 +37,8 @@ void yyerror(const char* e);
 %token<id> ID
 %token<num> NUM
 
-%token FUNC EXTERN RET
-
+%token FUNC EXTERN RET LET
+%token ASSIGN
 %token INT BOOL
 %token I8 I16 I32 I64 U8 U16 U32 U64
 
@@ -47,7 +47,7 @@ void yyerror(const char* e);
 %type<block> block
 %type<arrS> stmts args_list
 %type<arrE> exprs
-%type<stmt> stmt ret_stmt call_stmt arg
+%type<stmt> stmt ret_stmt call_stmt arg let_stmt
 %type<expr> expr val
 %type<type> type int_type
 %start program
@@ -79,6 +79,7 @@ proto
 args_list
 : args_list ',' arg {$$=$1; $$->push_back($3);}
 | arg {$$=new std::vector<Statment*>(); $$->push_back($1);}
+| {$$=new std::vector<Statment*>();}
 ;
 
 arg
@@ -98,6 +99,7 @@ stmts
 stmt
 : ret_stmt
 | call_stmt
+| let_stmt
 ;
 
 
@@ -107,6 +109,12 @@ ret_stmt
 
 call_stmt
 : ID '(' exprs ')' ';' {$$=new Call($1, $3);}
+;
+
+
+let_stmt
+: LET ID type ';' {$$=new Let($2,$3);}
+| ID type ASSIGN expr ';' {$$=new Let($1, $2, $4);}
 ;
 
 expr

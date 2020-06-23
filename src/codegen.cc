@@ -1,5 +1,13 @@
 #include <node.h>
 
+llvm::AllocaInst*
+allocateInst(llvm::BasicBlock* bb, const std::string &n, llvm::Type *t)
+{
+    llvm::IRBuilder<> tmpb(bb, bb->begin());
+    return tmpb.CreateAlloca(t, 0, n.c_str());
+}
+
+
 llvm::Type*
 IntType::gen(context::Context &cc){
     switch(size) {
@@ -19,7 +27,7 @@ IntType::gen(context::Context &cc){
 llvm::Value*
 Identifier::codegen(context::Context& cc)
 {
-    return cc.st.lookup(value).get();
+    return cc.Table[value];
 }
 
 llvm::Value*
@@ -63,7 +71,6 @@ Prototype::codegen(context::Context& cc)
     std::vector<llvm::Type*> llargs;
 
     for(auto arg : *args) {
-        
         llargs.push_back(arg->t->gen(cc));
     }
 
@@ -73,6 +80,10 @@ Prototype::codegen(context::Context& cc)
 
     llvm::Function* f = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, id->get(), cc.lm.get());
 
+    uint idx = 0;
+    for (auto &arg : f->args()) {
+        arg.setName(args->at(idx++)->name->get());
+    }
     return f;
 }
 
@@ -91,6 +102,13 @@ Method::codegen(context::Context &cc)
     llvm::BasicBlock* bb = llvm::BasicBlock::Create(cc.lc, "entry", f);
     cc.lb.SetInsertPoint(bb);
 
+    cc.currentBlock = bb;
+    cc.Table.clear();
+    for(auto &arg: f->args()) {
+        llvm::AllocaInst *alloc = allocateInst(bb, arg.getName(), arg.getType());
+        cc.lb.CreateStore(&arg, alloc);
+        cc.Table[arg.getName()] = alloc;
+    }
     body->codegen(cc);    
     llvm::verifyFunction(*f);
     return f;
@@ -124,4 +142,26 @@ llvm::Value*
 Return::codegen(context::Context& cc)
 {
     return cc.lb.CreateRet(expr->codegen(cc));
+}
+
+
+llvm::Value*
+Let::codegen(context::Context& cc)
+{
+    auto dt = t->gen(cc);
+    if (!dt) {
+        err << "variable '" << id->get() << "' is declared with unknown datatype '" << typeid(t).name() << std::endl;
+        exit(1);
+    }
+
+    llvm::AllocaInst *alloc = allocateInst(cc.currentBlock, id->get(), dt);
+
+    if (expr) {
+        auto exp = expr->codegen(cc);
+        cc.lb.CreateStore(exp, alloc);
+    }
+
+    cc.Table[id->get()] = alloc;
+
+    return nullptr;
 }

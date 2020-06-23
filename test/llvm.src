@@ -1,8 +1,7 @@
-func putch(fmt i64) i32;
-
-func main(ac i32) i64 {
-
-	putch(5);
-
-	ret 5;
+func main() int {
+	v1 int := 5;
+	v2 int := 4;
+	v3 int := v1 + v2;
+	
+	ret v3;
 }
