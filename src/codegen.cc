@@ -100,7 +100,7 @@ llvm::Value*
 Call::codegen(context::Context &cc)
 {
     llvm::Function *callef = cc.lm->getFunction(id->get());
-    if (callef) {
+    if (!callef) {
         err << "Error: '" << id->get() << "' function is called before defination" << std::endl;
         return nullptr;
     }

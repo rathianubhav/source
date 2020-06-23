@@ -106,7 +106,7 @@ ret_stmt
 ;
 
 call_stmt
-: ID '(' exprs ')' {$$=new Call($1, $3);}
+: ID '(' exprs ')' ';' {$$=new Call($1, $3);}
 ;
 
 expr
@@ -117,7 +117,8 @@ expr
 
 
 exprs
-: exprs expr {$$=$1; $$->push_back($2);}
+: exprs ',' expr {$$=$1; $$->push_back($3);}
+| expr {$$=new std::vector<Expression*>(); $$->push_back($1);}
 | {$$=new std::vector<Expression*>();}
 ;
 

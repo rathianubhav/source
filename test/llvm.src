@@ -1,4 +1,8 @@
-func main(ac i32) i32 {
+func putch(fmt i64) i32;
+
+func main(ac i32) i64 {
+
+	putch(5);
+
 	ret 5;
 }
-
