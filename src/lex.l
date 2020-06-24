@@ -48,6 +48,7 @@ char* trim(char* str, char s) {
 [><]|([><!=]=) yylval.op = getOper(yytext); return COMP;
 
 "int" return INT;
+"float" return FLOAT;
 
 "u8" return U8;
 "u16" return U16;
@@ -59,11 +60,16 @@ char* trim(char* str, char s) {
 "i32" return I32;
 "i64" return I64;
 
+"f32" return F32;
+"f64" return F64;
+
 "bool" return BOOL;
 "func" return FUNC;
-"extern" return EXTERN;
 "let" return LET;
 "ret" return RET;
+
+"if" return IF;
+"else" return ELSE;
 
 [ \t\v\n\r\f] ;
 [a-zA-Z_][a-zA-Z_0-9]* yylval.id = new Identifier(yytext); return ID;

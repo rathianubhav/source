@@ -47,6 +47,17 @@ public:
 
 };
 
+class FloatType : public DataType {
+private:
+    int size;
+    bool is_signed;
+public:
+    FloatType(int size = 0, bool is_signed = true)
+    : size(size), is_signed(is_signed) {}
+
+    virtual llvm::Type *gen(context::Context& cc) override;
+};
+
 
 class Expression : public Node {
 public:
@@ -162,7 +173,7 @@ public:
     virtual llvm::Value* codegen(context::Context& cc) override;
 };
 
-class Call : public Statment {
+class Call : public Expression {
 private:
     std::vector<Expression*> *arg;
     Identifier *id;
@@ -193,5 +204,33 @@ public:
 
     virtual ~Let() {
         delete id, t, expr;
+    }
+};
+
+class ExpressionStatment : public Statment {
+private:
+    Expression *expr;
+public:
+    ExpressionStatment(Expression * expr)
+        : expr(expr) {}
+    virtual llvm::Value* codegen(context::Context &cc) override;
+
+    virtual ~ExpressionStatment() {
+        delete expr;
+    }
+};
+
+
+class Condition : public Statment {
+private:
+    Expression* clause;
+    Block* ifblock, *elblock;
+public:
+    Condition(Expression* c, Block* ib, Block* eb = nullptr)
+        : clause(c),  ifblock(ib), elblock(eb) {}
+    virtual llvm::Value* codegen(context::Context &cc) override;
+
+    virtual ~Condition() {
+        delete clause, ifblock, elblock;
     }
 };

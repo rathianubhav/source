@@ -12,6 +12,8 @@
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
 
+#include <releax-cc/exec>
+
 source::out::stream err(2, 31);
 source::out::stream debug(1, 34);
 
@@ -36,7 +38,7 @@ source_main(releax::cli& app)
 
     source::context::Context cc;
 
-    cc.lm = std::make_unique<llvm::Module>("my cool jit", cc.lc);
+    cc.lm = std::make_unique<llvm::Module>("source", cc.lc);
     for(auto a: *tree) {
         a->codegen(cc);
     }
@@ -92,6 +94,12 @@ source_main(releax::cli& app)
     dest.flush();
 
     debug << "'" << filename << " writter\n";
+
+    if (!app.is_flagset("no-link")) {
+        releax::cmd::exec("gcc output.o");
+        releax::cmd::exec("rm output.o");
+    }
+   
 
     return 0;
 }

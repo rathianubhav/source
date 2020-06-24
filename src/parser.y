@@ -37,19 +37,20 @@ void yyerror(const char* e);
 %token<id> ID
 %token<num> NUM
 
-%token FUNC EXTERN RET LET
+%token FUNC RET LET
+%token IF ELSE
 %token ASSIGN
-%token INT BOOL
-%token I8 I16 I32 I64 U8 U16 U32 U64
+%token INT BOOL FLOAT
+%token I8 I16 I32 I64 U8 U16 U32 U64 F32 F64
 
 %type<toplevel> top_level proto func_def
 %type<arr> program top_levels
 %type<block> block
 %type<arrS> stmts args_list
 %type<arrE> exprs
-%type<stmt> stmt ret_stmt call_stmt arg let_stmt
-%type<expr> expr val
-%type<type> type int_type
+%type<stmt> stmt ret_stmt arg let_stmt cond_stmt expr_stmt
+%type<expr> expr val call_expr
+%type<type> type sub_type
 %start program
 
 %%
@@ -98,17 +99,14 @@ stmts
 
 stmt
 : ret_stmt
-| call_stmt
 | let_stmt
+| cond_stmt
+| expr_stmt
 ;
 
 
 ret_stmt
 : RET expr ';' {$$=new Return($2);}
-;
-
-call_stmt
-: ID '(' exprs ')' ';' {$$=new Call($1, $3);}
 ;
 
 
@@ -117,10 +115,24 @@ let_stmt
 | ID type ASSIGN expr ';' {$$=new Let($1, $2, $4);}
 ;
 
+cond_stmt
+: IF expr block {$$=new Condition($2, $3);}
+| IF expr block ELSE block {$$=new Condition($2, $3, $5);}
+;
+
+expr_stmt
+: expr ';' {$$=new ExpressionStatment($1);}
+;
+
 expr
 : expr OPA expr {$$=new Arithmetic($1, $2, $3);}
 | expr OPM expr {$$=new Arithmetic($1, $2, $3);}
+| call_expr
 | val
+;
+
+call_expr
+: ID '(' exprs ')' {$$=new Call($1, $3);}
 ;
 
 
@@ -136,11 +148,12 @@ val
 ;
 
 type
-: int_type
+: sub_type
 | INT {$$=new IntType();}
+| FLOAT {$$=new FloatType();}
 ;
 
-int_type
+sub_type
 : U8 {$$=new IntType(8, 0);}
 | U16 {$$=new IntType(16, 0);}
 | U32 {$$=new IntType(32, 0);}
@@ -150,6 +163,8 @@ int_type
 | I32 {$$=new IntType(32, 1);}
 | I64 {$$=new IntType(64, 1);}
 | BOOL {$$=new IntType(1);}
+| F32 {$$=new FloatType(32, 1);}
+| F64 {$$=new FloatType(64, 1);}
 ;
 
 %%

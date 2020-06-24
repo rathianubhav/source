@@ -24,6 +24,19 @@ IntType::gen(context::Context &cc){
     return nullptr;
 }
 
+llvm::Type*
+FloatType::gen(context::Context &cc){
+    switch(size) {
+        case 0: return llvm::Type::getFloatTy(cc.lc);
+        case 32: return llvm::Type::getFloatTy(cc.lc);
+        case 64: return llvm::Type::getDoubleTy(cc.lc);
+    }
+
+    err << "error: illegal size of 'float' " << size << std::endl;
+    exit(EXIT_FAILURE);
+    return nullptr;
+}
+
 llvm::Value*
 Identifier::codegen(context::Context& cc)
 {
@@ -33,8 +46,14 @@ Identifier::codegen(context::Context& cc)
 llvm::Value*
 Number::codegen(context::Context& cc)
 {
+    for(auto a : value) {
+        if (a == '.') {
+            FloatType ftype;
+            return llvm::ConstantFP::get(ftype.gen(cc), atof(value.c_str()));
+        }
+    }
     IntType i64_type(0,true);
-    return llvm::ConstantInt::get(i64_type.gen(cc), atoi(value.c_str()), false);
+    return llvm::ConstantInt::get(i64_type.gen(cc), (uint64_t) atoi(value.c_str()), false);
 }
 
 
@@ -164,4 +183,74 @@ Let::codegen(context::Context& cc)
     cc.Table[id->get()] = alloc;
 
     return nullptr;
+}
+
+
+llvm::Value*
+Condition::codegen(context::Context &cc)
+{
+    auto conv = clause->codegen(cc);
+    if (!conv) {
+        err << "error while generating code for condition" << std::endl;
+        return nullptr;
+    }
+
+    IntType i64_type;
+    conv = cc.lb.CreateFCmpONE(
+        conv, llvm::ConstantInt::get(i64_type.gen(cc), (uint64_t) 0, false), "ifcond"
+    );
+
+    auto curb = cc.currentBlock;
+
+    llvm::Function* f = cc.lb.GetInsertBlock()->getParent();
+
+    llvm::BasicBlock* ifb = llvm::BasicBlock::Create(cc.lc, "then", f),
+                    * elb = llvm::BasicBlock::Create(cc.lc, "else"),
+                    * mb  = llvm::BasicBlock::Create(cc.lc, "ifcont");
+    cc.lb.CreateCondBr(conv, ifb, elb);
+
+    cc.lb.SetInsertPoint(ifb);
+    cc.currentBlock = ifb;
+
+    llvm::Value *ifbv = ifblock->codegen(cc);
+    if (!ifbv) return nullptr;
+
+    cc.lb.CreateBr(mb);
+
+    ifb = cc.lb.GetInsertBlock();
+
+    llvm::Value *elbv;
+    if (elblock) {
+
+        f->getBasicBlockList().push_back(elb);
+        cc.lb.SetInsertPoint(elb);
+        cc.currentBlock = elb;
+
+        elbv = elblock->codegen(cc);
+        if (!elbv) {
+            return nullptr;
+        }
+
+        cc.lb.CreateBr(mb);
+
+        elb = cc.lb.GetInsertBlock();
+    }
+
+    f->getBasicBlockList().push_back(mb);
+    cc.lb.SetInsertPoint(mb);
+    llvm::PHINode *pn = cc.lb.CreatePHI(llvm::Type::getInt64Ty(cc.lc), 2, "iftmp");
+
+    pn->addIncoming(ifbv, ifb);
+    if (elblock) {
+        pn->addIncoming(elbv, elb);
+    }
+
+    return pn;
+
+}
+
+llvm::Value*
+ExpressionStatment::codegen(context::Context& cc)
+{
+    return expr->codegen(cc);
 }
