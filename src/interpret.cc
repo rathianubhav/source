@@ -220,26 +220,46 @@ Call::eval(context::Context* cc)
     return funenv->lookup("ret");
 }
 
-void
+int
 Block::exec(context::Context* cc)
 {
     for(auto a : *body) {
-        a->exec(cc);
+        int l = a->exec(cc);
+        switch (l) {
+            case BREAK_STMT:
+            case CONTINUE_STMT:
+                if (cc->loop) {
+                    return l;
+                } else {
+                    err << "can't break/continue outside loop" << std::endl;
+                }
+                break;
+            
+            case RETURN_STMT:
+                if (cc->func) {
+                    return l;
+                } else {
+                    err << "can't return outside function" << std::endl;
+                }
+                break;
+        }
     }
+    return 0;
 }
 
-void
+int
 Condition::exec(context::Context* cc)
 {
     if (expr->eval(cc).Bool()) {
-        ifblock->exec(cc);
+        return ifblock->exec(cc);
     } else if (elseBlock != nullptr) {
-        elseBlock->exec(cc);
+        return elseBlock->exec(cc);
     }
+    return 0;
 }
 
 
-void
+int
 Loop::exec(context::Context* cc)
 {
     switch(type) {
@@ -257,56 +277,69 @@ Loop::exec(context::Context* cc)
             }
 
             int x = 0;
+            cc->loop++;
             for(auto a : *arr->eval(cc).Arr()) {
                 cc->st->rebind(id->get(), Value(a->eval(cc)));
-                body->exec(cc);
+                int l = body->exec(cc);
+                if (l == BREAK_STMT) {
+                    break;
+                }
             }
+
+            cc->loop--;
             break;
         }
 
     }
+    return 0;
 }
 
 
-void
+int
 Let::exec(context::Context* cc)
 {
     cc->st->bind(id->get(), expr->eval(cc));
+    return 0;
 }
 
 
-void
+int
 Assign::exec(context::Context* cc)
 {
     cc->st->rebind(id->get(), expr->eval(cc));
+    return 0;
 }
 
-void
+int
 Print::exec(context::Context* cc)
 {
     for(auto a : *expr) {
         a->eval(cc).repr(std::cout);
     }
+    return 0;
 }
 
-void
+int
 Println::exec(context::Context* cc)
 {
    for(auto a : *expr) {
         a->eval(cc).repr(std::cout);
     }
     std::cout << std::endl;
+    return 0;
 }
 
-void
+int
 ExpressionStatment::exec(context::Context* cc)
 {
     body->eval(cc);
+
+    return 0;
 }
 
 extern "C" FILE *yyin;
 
-void
+int
 Use::exec(context::Context* cc)
 {
     auto oldptr = yyin;
@@ -363,4 +396,6 @@ Use::exec(context::Context* cc)
     delete modcc;
 
     yyin = oldptr;
+
+    return 0;
 }

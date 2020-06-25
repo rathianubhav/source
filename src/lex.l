@@ -60,6 +60,7 @@ true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 "in" return IN;
 "break" return BREAK;
 "continue" return CONTINUE;
+"ret" return RET;
 
 [ \t\v\n\r\f] ;
 [a-zA-Z_][a-zA-Z_0-9]* yylval.id = new Identifier(yytext); return ID;
