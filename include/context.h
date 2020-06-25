@@ -7,6 +7,8 @@ namespace context {
 
 class Context {
 public:
+    int loop = 0;
+    int func = 0;
     source::ST *st;
 };
 

@@ -9,6 +9,10 @@ extern source::out::stream err;
 using namespace source;
 enum Oper { ADD, SUB, MUL, DIV, LT, GT, LE, GE, AND, OR, NOT, EQ, NE};
 
+#define BREAK_STMT 11
+#define CONTINUE_STMT 12
+#define RETURN_STMT 13
+
 class Node {
 private:
 protected:
@@ -176,7 +180,7 @@ class Statment : public Node {
 private:
 public:
     Statment() {}
-    virtual void exec(context::Context *cc) {
+    virtual int exec(context::Context *cc) {
         err << "err[node] exec() not yet implemented for " << typeid(*this).name() << std::endl; 
     }
 };
@@ -187,7 +191,7 @@ private:
 public:
     Block(std::vector<Statment*> *body) : body(body) {}
     std::vector<Statment*> *get_body() {return body;}
-    virtual void exec(context::Context* cc) override;
+    virtual int exec(context::Context* cc) override;
     virtual ~Block() {
         for(auto b : *body) {
             delete b;
@@ -206,7 +210,7 @@ public:
     Condition(Expression* expr, Statment* ib, Statment* eb = nullptr)
     : expr(expr), ifblock(ib), elseBlock(eb) {}
 
-    virtual void exec(context::Context *cc) override;
+    virtual int exec(context::Context *cc) override;
     virtual ~Condition() {
         delete expr;
         delete ifblock;
@@ -235,7 +239,7 @@ public:
     Loop(Identifier* id, Expression* arr, Block* body)
         : id(id), arr(arr), body(body), type(INLOOP) {}
 
-    virtual void exec(context::Context* cc) override;
+    virtual int exec(context::Context* cc) override;
     virtual ~Loop() {
         if (expr) delete expr;
         if (body) delete body;
@@ -249,14 +253,23 @@ class Break : public Statment {
 private:
 public:
     Break() {}
-    virtual void exec(context::Context*cc) {};
+    virtual int exec(context::Context*cc) { return BREAK_STMT; }
 };
 
 class Continue : public Statment {
 private:
 public:
     Continue() {}
-    virtual void exec(context::Context*cc) {};
+    virtual int exec(context::Context*cc) { return CONTINUE_STMT;}
+};
+
+
+class Return : public Statment {
+private:
+    Expression* expr;
+public:
+    Return(Expression* expr) : expr(expr) {}
+    virtual int exec(context::Context* cc) override;
 };
 
 class Let : public Statment {
@@ -268,7 +281,7 @@ public:
     Let(Identifier* id, Expression* expr)
         : id(id), expr(expr) {}
 
-    virtual void exec(context::Context* cc) override;
+    virtual int exec(context::Context* cc) override;
 
     virtual ~Let() {
         delete id;
@@ -286,7 +299,7 @@ public:
     Assign(Identifier* id, Expression* expr)
         : id(id), expr(expr) {}
 
-    virtual void exec(context::Context* cc) override;
+    virtual int exec(context::Context* cc) override;
 
     virtual ~Assign() {
         delete id;
@@ -300,7 +313,7 @@ private:
 public:
     Print(std::vector<Expression*> *expr) : expr(expr) {}
 
-    virtual void exec(context::Context* cc) override;
+    virtual int exec(context::Context* cc) override;
     virtual ~Print() {
         for(auto a : *expr) {
             delete a;
@@ -316,7 +329,7 @@ private:
 public:
     Println(std::vector<Expression*> *expr) : expr(expr) {}
 
-    virtual void exec(context::Context* cc) override;
+    virtual int exec(context::Context* cc) override;
     virtual ~Println() {
         for(auto a : *expr) {
             delete a;
@@ -331,7 +344,7 @@ private:
 public:
     ExpressionStatment(Expression* body) : body(body) {}
 
-    virtual void exec(context::Context* cc) override;
+    virtual int exec(context::Context* cc) override;
     virtual ~ExpressionStatment() { delete body;}
 };
 
@@ -378,7 +391,7 @@ private:
 public:
     Use(String* md) : modname(md) {}
 
-    virtual void exec(context::Context* cc) override;
+    virtual int exec(context::Context* cc) override;
     virtual ~Use() {
         delete modname;
     }
