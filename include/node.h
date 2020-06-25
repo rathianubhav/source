@@ -176,6 +176,20 @@ public:
     virtual ~Negation() { delete expr;}
 };
 
+class Clib : public Expression {
+private:
+    std::vector<Expression*> *exprs;
+public:
+    Clib(std::vector<Expression*> *exprs)
+        : exprs(exprs) {}
+    virtual Value eval(context::Context* cc) override;
+
+    virtual ~Clib() { 
+        for(auto a : *exprs) delete a;
+        exprs->clear();
+    }
+};
+
 class Statment : public Node {
 private:
 public:

@@ -1,0 +1,7 @@
+let print := func msg, fd {
+    if fd == null {
+        fd := 1;
+    }
+
+    __clib__("build/libsyscall.so","syscall_write", fd, msg);
+};
