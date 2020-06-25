@@ -190,9 +190,9 @@ Value
 Call::eval(context::Context* cc)
 {
     Closure func = id->eval(cc).Func();
-    source::ST* funenv = new source::ST(func.env);
+    auto fc = source::context::init(func.env);
 
-    funenv->bind("ret", Value());
+    fc->st->bind("ret", Value());
     auto func_req_args = func.func->get_args();
 
     int fnc = func_req_args->size(),
@@ -200,24 +200,24 @@ Call::eval(context::Context* cc)
 
     int min = fnc < clc ? fnc : clc;
     for(int i = 0; i < min; i++) {
-        funenv->bind(func_req_args->at(i)->get(), arg->at(i)->eval(cc));
+        fc->st->bind(func_req_args->at(i)->get(), arg->at(i)->eval(cc));
     }
 
     if (fnc > min) {
         for(int i = min; i < fnc; i++) {
-            funenv->bind(func_req_args->at(i)->get(), Value());
+            fc->st->bind(func_req_args->at(i)->get(), Value());
         }
     } else if (clc > min) {
         for(int i = min; i < clc; i++) {
-            funenv->bind("__extra_" + std::to_string((i - min) + 1) + "__", arg->at(i)->eval(cc));
+            fc->st->bind("__extra_" + std::to_string((i - min) + 1) + "__", arg->at(i)->eval(cc));
         }
     }
 
-    auto fc = source::context::init(funenv);
-
-    func.func->get_body()->exec(fc);
     
-    return funenv->lookup("ret");
+    fc->func++;
+    func.func->get_body()->exec(fc);
+    fc->func--;
+    return fc->st->lookup("ret");
 }
 
 int
@@ -300,6 +300,12 @@ Let::exec(context::Context* cc)
 {
     cc->st->bind(id->get(), expr->eval(cc));
     return 0;
+}
+
+int Return::exec(context::Context* cc) 
+{ 
+    cc->st->rebind("ret", expr->eval(cc));
+    return RETURN_STMT;
 }
 
 
