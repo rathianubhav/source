@@ -1,5 +1,7 @@
 #include <interpreter.h>
 #include <inbuilts.h>
+#include <dlfcn.h>
+
 extern bool error;
 extern bool isdebug;
 
@@ -293,6 +295,37 @@ Loop::exec(context::Context* cc)
     }
     return 0;
 }
+
+source::Value
+Clib::eval(context::Context* cc)
+{
+    Value (*funcptr)(std::vector<Value>);
+
+    std::string libname = exprs->at(0)->eval(cc).Str();
+    void* handler = dlopen(libname.c_str(), RTLD_LAZY);
+    if (!handler) {
+        err << "error while loading library " << libname << " " << dlerror() << std::endl;
+        return Value(false);
+    }
+
+    std::string funcname = exprs->at(1)->eval(cc).Str();
+    funcptr = dlsym(handler,funcname.c_str());
+    if (!funcptr) {
+        err << "error while loading symbol " << funcname << " " << dlerror() << std::endl;
+        return Value(false);
+    }
+
+    std::vector<Value> args;
+    for(int i = 2; i < exprs->size(); i++) {
+        args.push_back(exprs->at(i)->eval(cc));
+    }
+
+    auto retval = funcptr(args);
+    dlclose(handler);
+
+    return retval;
+}
+
 
 
 int

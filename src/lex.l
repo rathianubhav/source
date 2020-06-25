@@ -56,6 +56,7 @@ true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 "for" return FOR;
 "__print__" return PRINT;
 "__println__" return PRINTLN;
+"__clib__" return CLIB;
 "null" return SNULL;
 "in" return IN;
 "break" return BREAK;
