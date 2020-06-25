@@ -1,0 +1,13 @@
+let main := func args {
+	for i in range(10) {
+		__println__("breaking at ",i);
+		if i == 2 {
+			__println__("continuing at ", i);
+			continue;
+			__println__("i must not printed");
+		}
+		if i == 5 {
+			break;
+		}
+	}
+};

@@ -1,0 +1,12 @@
+let main := func args {
+	let x := 0;
+	
+	for x <= 5 {
+		x := x + 1;
+		__println__(x);
+	}
+	
+	for i in range(6) {
+		__println__(i);
+	}
+};

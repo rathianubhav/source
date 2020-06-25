@@ -1,0 +1,11 @@
+let check := func args {
+	__println__(typeof(args));
+};
+
+let main := func args {
+	check(5);
+	check(26.45);
+	check(true);
+	check("string");
+	check(check);
+};

@@ -1,0 +1,8 @@
+let main := func args {
+	let x := 5;
+	let y := 5.6;
+	let z := true;
+	let a := "releax.in";
+	
+	__println__(x, " ", y, " ", z, " ", a);
+};

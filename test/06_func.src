@@ -1,0 +1,11 @@
+let fibonacci := func val {
+	if (val <= 1) {
+		ret val;
+	}
+	
+	ret fibonacci(val - 1) + fibonacci(val - 2);
+};
+
+let main := func args {
+	__println__(fibonacci(9));
+};
