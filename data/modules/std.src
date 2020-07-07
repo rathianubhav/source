@@ -1,8 +1,0 @@
-let fgets := func fptr {
-	let x := fgetc(fptr);
-	ret := "";
-	for x != null or x != " " {
-		ret := ret + x;
-		x := fgetc(fptr);
-	}
-};

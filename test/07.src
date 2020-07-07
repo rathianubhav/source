@@ -1,0 +1,6 @@
+use io;
+let arr := ["Hello world"];
+Print(arr);
+
+arr := append(arr, 5);
+Print(arr);

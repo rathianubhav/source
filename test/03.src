@@ -1,0 +1,7 @@
+let x := 5;
+
+if x >= 6 {
+    print("hello World");
+} else {
+    print("hey their");
+}

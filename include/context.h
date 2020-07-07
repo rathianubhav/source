@@ -1,18 +1,16 @@
-#pragma once
-#include "st.h"
+#ifndef __CONTEXT__
+#define __CONTEXT__
 
-
-namespace source {
-namespace context {
+#include "symboltable.h"
 
 class Context {
 public:
     int loop = 0;
     int func = 0;
-    source::ST *st;
+    SymbolTable st;
+
+    Context() : st(SymbolTable(nullptr)) {}
+    Context(SymbolTable st) : st(st) {}
 };
 
-Context* init(ST* st = nullptr);
-
-}
-}
+#endif

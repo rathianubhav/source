@@ -1,5 +1,0 @@
-use "io";
-
-let main := func args {
-    io.print("Hello World",2);
-};

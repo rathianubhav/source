@@ -1,92 +1,154 @@
-#pragma once
+#ifndef __VALUE__
+#define __VALUE__
 
-#include <cstring>
+#include <string>
 #include <iostream>
+#include <utils.h>
 #include <vector>
+#include <map>
 
-class Identifier;
-class Statment;
-class Expression;
+using namespace std;
 
 class Method;
-
-namespace source {
-
-
-class ST;
-
-enum Type { INT_T, FLOAT_T, BOOL_T, NONE_T, STR_T, ANY_T, FUNC_T, ARRAY_T, DICT_T};
+class SymbolTable;
+class Statment;
+class Identifier;
+class Expression;
+class Value;
 
 
-typedef std::pair<Identifier*, Expression*> dict;
+enum Type {
+    INT_T, FLOAT_T, BOOL_T, NONE_T, STRING_T, ANY_T,
+    FUNCTION_T, ARRAY_T, CONTAINER_T,
+};
 
-class MethodDefination{
+typedef pair<Identifier*, Expression*> ContainerData;
+
+
+class ContainerDef {
 public:
-    virtual std::vector<Identifier*> *get_args() = 0;
+    virtual Value get_val(const string& id) = 0;
+};
+
+class ContainerClosure {
+public:
+    ContainerDef *container_def;
+    SymbolTable* environment;
+};
+
+class MethodDef {
+public:
+    virtual vector<Identifier*> *get_args() = 0;
     virtual Statment* get_body() = 0;
 };
 
 class Closure {
 public:
-    Method* func;
-    ST* env;
+    MethodDef* method_def;
+    SymbolTable* environment;
 };
+
 
 class Value {
 private:
     union {
-        int Int;
-        double Float;
+        int Integer;
+        float Float;
         bool Bool;
-        std::string* Str;
+        string* String;
         void* Any;
-        Closure Func;
-        std::vector<Expression*> *Arr;
-        std::vector<dict*> *Dict;
+        Closure Function;
+        ContainerClosure Container;
+        vector<Expression*> *Array;
     } value;
 
     Type type;
+
 public:
 
-    explicit Value()        { type = NONE_T; }
-    explicit Value(int n)   { type = INT_T;  value.Int  = n;}
-    explicit Value(double d){ type = FLOAT_T; value.Float = d;}
-    explicit Value(bool b)  { type = BOOL_T; value.Bool = b;}
-    explicit Value(char* c) { type = STR_T;  value.Str  = new std::string(c);}
-    explicit Value(std::string c) { type = STR_T;  value.Str  = new std::string(c);}
-    explicit Value(void* v) { type = ANY_T;  value.Any  = v;}
-    explicit Value(std::vector<Expression*> *arr) { type = ARRAY_T; value.Arr = arr;}
-    explicit Value(Method* f, source::ST* env) { 
-        type = FUNC_T;
-        value.Func.func =f;
-        value.Func.env = env;
-
+    string get_type_str() {
+        switch(type) {
+            case INT_T: return "int";
+            case FLOAT_T: return "float";
+            case STRING_T: return "string";
+            case BOOL_T: return "bool";
+            case ANY_T: return "any";
+            case FUNCTION_T: return "method";
+            case ARRAY_T: return "array";
+            case CONTAINER_T: return "container";
+        }
+        return "unknown";
+    }
+    static string print_type(Type t) {
+        switch(t) {
+            case INT_T: return "int";
+            case FLOAT_T: return "float";
+            case STRING_T: return "string";
+            case BOOL_T: return "bool";
+            case ANY_T: return "any";
+            case FUNCTION_T: return "method";
+            case ARRAY_T: return "array";
+            case CONTAINER_T: return "container";
+        }
+        return "unknown";
+    }
+    static void check_type(Value v, Type t) {
+        if (v.get_type() != t) {
+            cout << "Error: illegal datatype " << v.get_type_str() << ", but required '" << Value::print_type(t) << "'" << endl;
+            exit(5); 
+        }
     }
 
+    explicit Value() { type=NONE_T;}
+    explicit Value(int n) { type=INT_T; value.Integer = n;}
+    explicit Value(float f) { type=FLOAT_T; value.Float = f;}
+    explicit Value(bool b) { type=BOOL_T; value.Bool = b;}
+    explicit Value(const string& s) { type=STRING_T; value.String = new string(s);}
+    explicit Value(void* v) { type=ANY_T; value.Any = v;}
+    explicit Value(vector<Expression*> *arr) { type = ARRAY_T; value.Array = arr;}
+    explicit Value(MethodDef* f, SymbolTable* env)
+    {
+        type = FUNCTION_T;
+        value.Function.method_def = f;
+        value.Function.environment = env;
+    }
 
-    explicit Value(std::vector<dict*> *d) { type = DICT_T, value.Dict = d;}
+    explicit Value(ContainerDef* c, SymbolTable* env)
+    {
+        type = CONTAINER_T;
+        value.Container.container_def = c;
+        value.Container.environment = env;
+    }
 
+    Type get_type() {return type;}
+    void set_type(Type t) {type = t;}
+    bool oftype(Type t) {
+        return type == t;
+    }
 
-    Type getType() {return type;}
-    void setType(Type t) {type = t;}
-
-    int Int() {return value.Int;}
-    double Float() {return value.Float;}
+    int Int() {return value.Integer;}
+    float Float() {return value.Float;}
     bool Bool() {return value.Bool;}
-    std::string Str() {return *value.Str;}
+    string String() {return *value.String;}
     void* Any() {return value.Any;}
-    std::vector<Expression*> *Arr() {return value.Arr;}
-    Closure Func() {return value.Func;}
-    std::vector<dict*> *Dict() {return value.Dict;}
+    vector<Expression*> *Array() {return value.Array;}
+    Closure Function() {return value.Function;}
+    ContainerClosure Container() {return value.Container;}
 
-    void repr(std::ostream& out) {
+
+
+    void repr(ostream &out) {
         switch(type) {
-            case INT_T: out << value.Int; break;
+            case INT_T: out << value.Integer; break;
             case FLOAT_T: out << value.Float; break;
-            case BOOL_T: out << (value.Bool ? "true": "false"); break;
-            case STR_T: out << *value.Str; break;
+            case BOOL_T: out << value.Bool ? "true" : "false"; break;
+            case STRING_T: out << *value.String; break;
             case NONE_T: out << "unset"; break;
             case ANY_T: out << value.Any; break;
+            case ARRAY_T: out << "array"; break;
+            case FUNCTION_T: out << "function"; break;
+            case CONTAINER_T: out << "container"; break;
+            default: out << "illegal_variable"; break;
         }
     }
 
@@ -94,13 +156,18 @@ public:
         if (type != other.type) {
             return false;
         }
+
         switch(type) {
-            case INT_T: return value.Int == other.value.Int;
+            case INT_T: return value.Integer == other.value.Integer;
             case FLOAT_T: return value.Float == other.value.Float;
             case BOOL_T: return value.Bool == other.value.Bool;
-            case STR_T: return value.Str ==  other.value.Str;
-            case FUNC_T: return false;
+            case STRING_T: return *value.String == *other.value.String;
             case NONE_T: return true;
+            case FUNCTION_T: return false;
+            case ARRAY_T: {
+                return equal(value.Array->begin(), value.Array->end(),
+                      other.value.Array->begin());
+            }
             case ANY_T: return value.Any == other.value.Any;
         }
         return false;
@@ -109,58 +176,160 @@ public:
     bool operator<(const Value& other) {
         if (type != other.type) return false;
         switch(type) {
-            case INT_T: return value.Int < other.value.Int;
+            case INT_T: return value.Integer < other.value.Integer;
             case FLOAT_T: return value.Float < other.value.Float;
             case BOOL_T: return value.Bool < other.value.Bool;
-            case STR_T: return value.Str->length() < other.value.Str->length();
-            case FUNC_T: return false;
+            case STRING_T: return value.String->length() < other.value.String->length();
             case NONE_T: return false;
-            case ANY_T: return value.Any < other.value.Any;
+            case FUNCTION_T: return false;
+            case ARRAY_T: return value.Array->size() < other.value.Array->size();
+            case ANY_T: return false;
         }
+
         return false;
     }
 
     Value operator+(const Value& other) {
-        if (type != other.type) return Value();
         switch(type) {
-            case INT_T: return Value(value.Int + other.value.Int);
-            case FLOAT_T: return Value(value.Float + other.value.Float);
-            case BOOL_T: return Value(value.Bool + other.value.Bool);
-            case STR_T: {
-                return Value((char*)(*value.Str + *other.value.Str).c_str());
+            case INT_T: {
+                switch (other.type) {
+                    case INT_T: return Value(value.Integer + other.value.Integer);
+                    case FLOAT_T: return Value(value.Integer + (int)other.value.Float);
+                    case STRING_T: {
+                        if (isInt(*other.value.String))
+                            return Value(value.Integer + atoi(other.value.String->c_str()));
+                        else {
+                            cout << "Error: can't add integer with string" << endl;
+                            exit(5);
+                        }
+                    }
+                    default:
+                        cout << "can't add int with " + Value::print_type(other.type) << endl;
+                        exit(6);
+                }
+            }
+
+            case FLOAT_T: {
+                switch (other.type) {
+                    case INT_T: return Value(value.Float + (float)other.value.Integer);
+                    case FLOAT_T: return Value(value.Float + other.value.Float);
+                    case STRING_T: {
+                        if (isFloat(*other.value.String))
+                            return Value(value.Float + strtof(other.value.String->c_str(),0));
+                        else {
+                            cout << "Error: can't add float with string" << endl;
+                            exit(5);
+                        }
+                    }
+                    default:
+                        cout << "can't add float with " + Value::print_type(other.type) << endl;
+                        exit(6);
+                }
+            }
+
+            case STRING_T: {
+                switch (other.type) {
+                    case INT_T: return Value(value.String->append(to_string(other.value.Integer)));
+                    case FLOAT_T: return Value(value.String->append(to_string(other.value.Float)));
+                    case STRING_T: return Value(value.String->append(*other.value.String));
+                    default:
+                        cout << "can't add string with " + Value::print_type(other.type) << endl;
+                        exit(6);
+                }
             }
         }
+
+        cout << "illegal operation between" << Value::print_type(type) << " and " << Value::print_type(other.type) << endl;
+        exit(6);
+
         return Value();
     }
 
     Value operator-(const Value& other) {
-        if (type != other.type) return Value();
         switch(type) {
-            case INT_T: return Value(value.Int - other.value.Int);
-            case FLOAT_T: return Value(value.Float - other.value.Float);
+            case INT_T: {
+                switch (other.type) {
+                    case INT_T: return Value(value.Integer - other.value.Integer);
+                    case FLOAT_T: return Value(value.Integer - (int)other.value.Float);
+                    default:
+                        cout << "can't subtract int with " + Value::print_type(other.type) << endl;
+                        exit(6);
+                }
+            }
+
+            case FLOAT_T: {
+                switch (other.type) {
+                    case INT_T: return Value(value.Float - (float)other.value.Integer);
+                    case FLOAT_T: return Value(value.Float - other.value.Float);
+                    default:
+                        cout << "can't subtract float with " + Value::print_type(other.type) << endl;
+                        exit(6);
+                }
+            }
         }
+        cout << "illegal operation between" << Value::print_type(type) << " and " << Value::print_type(other.type) << endl;
+        exit(6);
+
         return Value();
     }
 
     Value operator*(const Value& other) {
-        if (type != other.type) return Value();
         switch(type) {
-            case INT_T: return Value(value.Int * other.value.Int);
-            case FLOAT_T: return Value(value.Float * other.value.Float);
+            case INT_T: {
+                switch (other.type) {
+                    case INT_T: return Value(value.Integer * other.value.Integer);
+                    case FLOAT_T: return Value(value.Integer * (int)other.value.Float);
+                    default:
+                        cout << "can't multiply int with " + Value::print_type(other.type) << endl;
+                        exit(6);
+                }
+            }
+
+            case FLOAT_T: {
+                switch (other.type) {
+                    case INT_T: return Value(value.Float * (float)other.value.Integer);
+                    case FLOAT_T: return Value(value.Float * other.value.Float);
+                    default:
+                        cout << "can't multiply float with " + Value::print_type(other.type) << endl;
+                        exit(6);
+                }
+            }
         }
+        cout << "illegal operation between" << Value::print_type(type) << " and " << Value::print_type(other.type) << endl;
+        exit(6);
+
         return Value();
     }
 
     Value operator/(const Value& other) {
-        if (type != other.type) return Value();
         switch(type) {
-            case INT_T: return Value(value.Int / other.value.Int);
-            case FLOAT_T: return Value(value.Float / other.value.Float);
+            case INT_T: {
+                switch (other.type) {
+                    case INT_T: return Value(value.Integer / other.value.Integer);
+                    case FLOAT_T: return Value(value.Integer / (int)other.value.Float);
+                    default:
+                        cout << "can't divide int with " + Value::print_type(other.type) << endl;
+                        exit(6);
+                }
+            }
+
+            case FLOAT_T: {
+                switch (other.type) {
+                    case INT_T: return Value(value.Float / (float)other.value.Integer);
+                    case FLOAT_T: return Value(value.Float / other.value.Float);
+                    default:
+                        cout << "can't divide float with " + Value::print_type(other.type) << endl;
+                        exit(6);
+                }
+            }
         }
+        cout << "illegal operation between" << Value::print_type(type) << " and " << Value::print_type(other.type) << endl;
+        exit(6);
+
         return Value();
     }
 
 
 };
 
-}
+#endif

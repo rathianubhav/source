@@ -3,28 +3,33 @@
 #include "../include/node.h"
 #include "parser.tab.h"
 
-Oper getOper(const char* s) {
+Operator 
+get_oper(const char* s)
+{
     switch(s[0]) {
-        case '=': return EQ;
-        case '!': return NE;
-        case '>': return (s[1] == '=' ? GE : GT);
-        case '<': return (s[1] == '=' ? LE : LT);
-        default : exit(8);
+        case '=' : return EQ;
+        case '!' : return NE;
+        case '>' : return (s[1] == '=' ? GE : GT);
+        case '<' : return (s[1] == '=' ? LE : LT);
+        default: exit(8);
     }
 }
 
-char* trim(char* str) {
+char* trim(char* str)
+{
     char* toret = str;
     while(toret[0] == '"') ++toret;
-    for(int i=0; toret[i] != '\0'; i++) if(toret[i] == '"') toret[i] = '\0';
+    for(int i = 0; toret[i] != '\0'; i++)
+        if (toret[i] == '"')
+            toret[i] = '\0';
     return toret;
 }
-
 
 %}
 
 %option noyywrap
 %option nounput
+%option yylineno
 
 %%
 
@@ -32,6 +37,7 @@ char* trim(char* str) {
 [*/] yylval.op = (yytext[0] == '*' ? MUL : DIV); return OPM;
 and|or yylval.op = (yytext[0] == 'a' ? AND : OR); return BOP;
 not yylval.op = NOT; return NOTTOK;
+
 ":=" return ASSIGN;
 "." return '.';
 "(" return '(';
@@ -44,30 +50,35 @@ not yylval.op = NOT; return NOTTOK;
 ":" return ':';
 "," return ',';
 
-[><]|([><!=]=) yylval.op = getOper(yytext); return COMP;
+[><]|([><!=]=) yylval.op = get_oper(yytext); return COMP;
 true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 
 "use" return USE;
-"func" return FUNC;
-"cont" return CONT;
 "let" return LET;
 "if" return IF;
 "else" return ELSE;
 "for" return FOR;
-"__print__" return PRINT;
-"__println__" return PRINTLN;
-"__clib__" return CLIB;
-"null" return SNULL;
 "in" return IN;
+
 "break" return BREAK;
 "continue" return CONTINUE;
-"ret" return RET;
+
+
+"func" return FUNC;
+"cont" return CONT;
+"ret" return RETURN;
+
+"debug" return DEBUG;
+
+
+"null" return NULL_T;
+"print" return PRINT;
 
 [ \t\v\n\r\f] ;
 [a-zA-Z_][a-zA-Z_0-9]* yylval.id = new Identifier(yytext); return ID;
 ([0-9]*[.])?[0-9]+ yylval.num = new Number(yytext); return NUM;
 ["][^"]*["] yylval.str = new String(trim(yytext)); return STRING;
 "#!".* ;
-. std::cout << "err[lex]: unknow token starting with " << yytext << std::endl;
+. std::cout << "Error: [" << yylineno << "] unknown token starting with " << yytext << std::endl;
 
 %%

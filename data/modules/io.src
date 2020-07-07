@@ -1,7 +1,11 @@
-let print := func msg, fd {
-    if fd == null {
-        fd := 1;
+let Print := func mesg {
+    if is_arr(mesg) {
+        print("[");
+        for i in mesg {
+            print(i);
+        }
+        print("]");
+    } else {
+        print(mesg, "\n");
     }
-
-    __clib__("build/libsyscall.so","syscall_write", fd, msg);
 };

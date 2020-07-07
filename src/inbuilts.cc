@@ -1,165 +1,71 @@
 #include <inbuilts.h>
-#include <time.h>
-#include <memory>
+#include <unistd.h>
+#include <node.h>
 
- /* InBuilts */
-std::vector<InBuilt*> 
-inbuilts = 
+
+vector<InBuilt*> inbuilts = vector<InBuilt*>
 {
-    new Typeof(), 
     new Sleep(),
-    new System(),
-    new Fopen(),
-    new Fclose(),
-    new Fputc(),
-    new Fgetc(),
-    new Range()
+    new Append(),
+    new Len(),
+    new IsType(INT_T), new IsType(FLOAT_T), new IsType(STRING_T), new IsType(BOOL_T), new IsType(FUNCTION_T), new IsType(ARRAY_T), new IsType(ANY_T),
 };
 
 Value
-Typeof::run(std::vector<Value> args)
-{
-    switch (args.at(0).getType()) {
-        case INT_T: return Value("int");
-        case FLOAT_T: return Value("float");
-        case STR_T: return Value("string");
-        case BOOL_T: return Value("bool");
-        case NONE_T: return Value("null");
-        case ANY_T: return Value("any");
-        case FUNC_T: return Value("func");
-        case ARRAY_T: return Value("array");
-        case DICT_T: return Value("container");
-    }
-
-    return Value("null");
+Sleep::run(vector<Value> args)
+{   
+    Value::check_type(args.at(0), INT_T);
+    return Value((int)sleep(args.at(0).Int()));
 }
 
-
 Value
-Sleep::run(std::vector<Value> args)
+Append::run(vector<Value> args)
 {
-    auto t = args.at(0);
-    switch(t.getType()) {
-        case INT_T: return Value((int)sleep(t.Int()));
-        case FLOAT_T: return Value((double)sleep(t.Float()));
+    Value iterable = args.at(0);
+    Value val = args.at(1);
+    Expression* expr;
+
+    if (!iterable.oftype(ARRAY_T) &&
+        !iterable.oftype(STRING_T)) {
+        cout << "Error: appending in none seperable datatype '" << iterable.get_type_str() << "' is not allowed" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    switch (val.get_type()) {
+        case INT_T: expr = new Number(to_string(val.Int()).c_str()); break;
+        case FLOAT_T: expr = new Number(to_string(val.Float()).c_str()); break;
+        case STRING_T: expr = new String(val.String().c_str()); break;
+        case BOOL_T: expr = new Bool(val.Bool()); break;
+        case ARRAY_T: expr = new Array(val.Array()); break;
         default:
-            err << "need int or float" << std::endl;
-            
-
+            cout << "Error: illegal value of datatype '"  << val.get_type_str() << "' can't be append in " << iterable.get_type_str() << endl;
+            exit(EXIT_FAILURE);
     }
-    return Value();
+
+    iterable.Array()->push_back(expr);
+
+    return iterable;
 }
 
 Value
-System::run(std::vector<Value> args)
+Len::run(Args args)
 {
-    std::array<char, 128> buffer;
-    std::string result;
-
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(args.at(0).Str().c_str(), "r"), pclose);
-    if (!pipe) {
-        return Value("popen() failed");
+    switch (args.at(0).get_type()) {
+        case INT_T: return Value((int)sizeof(int));
+        case FLOAT_T: return Value((int) sizeof(float));
+        case STRING_T: return Value((int) args.at(0).String().length());
+        case ARRAY_T: return Value((int) args.at(0).Array()->size());
+        case BOOL_T: return Value((int) sizeof(bool));
     }
+    
+    cout << "Error: len() for '" << args.at(0).get_type_str() << "' not yet implemented" << endl;
+    exit(EXIT_FAILURE);
 
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-
-    return Value((char*)result.c_str());
+    return Value(0);
 }
 
 Value
-Fopen::run(std::vector<Value> args)
+IsType::run(Args args)
 {
-    FILE* fptr;
-    fptr = fopen(args.at(0).Str().c_str(), args.at(1).Str().c_str());
-    if (fptr) {
-        return Value(fptr);
-    }
-    return Value(false);
-}
-
-
-Value
-Fclose::run(std::vector<Value> args)
-{
-    FILE* fptr;
-    if (args.at(0).getType() != ANY_T) {
-        return Value(false);
-    }
-    fptr = (FILE*)args.at(0).Any();
-
-    if (fptr) {
-        fclose(fptr);
-        return Value(true);
-    }
-
-    return Value(false);
-}
-
-Value
-Fgetc::run(std::vector<Value> args)
-{
-    FILE* fptr;
-
-    if (args.at(0).getType() != ANY_T) {
-        return Value(false);
-    }
-    fptr = (FILE*)args.at(0).Any();
-
-    if (fptr) {
-        auto c = getc(fptr);
-        if (c == -1) {
-            return Value();
-        }
-        return Value(std::string(1, c));
-    }
-
-    return Value(false);
-}
-
-Value
-Fputc::run(std::vector<Value> args)
-{
-    FILE* fptr;
-    if (args.at(0).getType() != ANY_T) {
-        return Value(false);
-    }
-
-    fptr = (FILE*)args.at(0).Any();
-    if (fptr) {
-        fputc(args.at(1).Str()[0],fptr);
-        return Value(true);
-    }
-
-    return Value(false);
-}
-
-Value
-Range::run(std::vector<Value> args)
-{
-    auto arr = new std::vector<Expression*>();
-    switch (args.at(0).getType()) {
-        case INT_T:
-            for(int i = 0; i < args.at(0).Int(); i++) {
-                arr->push_back(new Number(i));
-            }
-
-            break;
-
-        case FLOAT_T:
-            for(double i = 0; i < args.at(0).Float(); i++) {
-                arr->push_back(new Number(i));
-            }
-
-            break;
-
-        case STR_T:
-            for(auto i : args.at(0).Str()) {
-                arr->push_back(new String(std::string(1, i).c_str()));
-            }
-            break;
-    }
-
-    return Value(arr);
+    return Value(t == args.at(0).get_type());
 }

@@ -1,129 +1,96 @@
-#pragma once
+#ifndef __INBUILTS__
+#define __INBUILTS__
 
 #include "node.h"
 #include "value.h"
 
+typedef vector<Value> Args;
+
 class InBuilt : public Method, public Statment {
 protected:
-    std::vector<Identifier*> *inargs;
-    std::string id;
+    vector<Identifier*> *inarg;
+    string id;
 public:
-    std::string getID() {return id;}
+    string get_id() {return id;}
     virtual Statment* get_body() override {return this;}
-    std::vector<Identifier*> *get_args() override {return inargs;}
+    vector<Identifier*> *get_args() override {return inarg;}
 
     InBuilt() {
-        inargs = new std::vector<Identifier*>();
+        inarg = new vector<Identifier*>();
     }
-    void set_args_count(int size) {
+
+    void set_args(int size) {
         for(int i = 0; i < size; i++) {
-            auto a = "__args__" + std::to_string(i);
-            inargs->push_back(new Identifier(a.c_str()));
+            auto a = "__args__" + to_string(i);
+            inarg->push_back(new Identifier(a.c_str()));
         }
     }
-    virtual int exec(context::Context* cc) override {
 
-        std::vector<Value> args;
-        for(auto a : *inargs) {
-            if (cc->st->defined(a->get())) {
-                args.push_back(cc->st->lookup(a->get()));
-            } else {
-                args.push_back(Value("__undefine__"));
-            }
-            
+    virtual int exec(Context& cc) override {
+        vector<Value> args;
+        for(auto a : *inarg) {
+            if (cc.st.isdefined(a->get())) args.push_back(cc.st.lookup(a->get()));
+            else args.push_back(Value());
         }
-
-        auto r = run(args);
-        cc->st->rebind("ret",r);
-
+        Value v = run(args);
+        cc.st.rebind("ret", v);
         return 0;
-    }
+    }   
 
-
-    virtual Value run(std::vector<Value> args) = 0;
-
-};
-
-
-class Typeof : public InBuilt {
-public:
-    Typeof() {
-        id = "typeof";
-        set_args_count(1);
-    }
-
-    virtual Value run(std::vector<Value> args) override;
+    virtual Value run(vector<Value> args) = 0;
 };
 
 class Sleep : public InBuilt {
 public:
     Sleep() {
         id = "sleep";
-        set_args_count(1);
+        set_args(1);
     }
-
-    virtual Value run(std::vector<Value> args) override;
+    virtual Value run(vector<Value> args) override;
 };
 
-class System : public InBuilt {
+class Append : public InBuilt {
 public:
-    System() : InBuilt() {
-        id = "system";
-        set_args_count(1);
+    Append() {
+        id = "append";
+        set_args(2);
     }
 
-    virtual Value run(std::vector<Value> args) override;
+    virtual Value run(vector<Value> args) override;
 };
 
-
-class Fopen : public InBuilt {
+class Len : public InBuilt {
 public:
-    Fopen() : InBuilt() {
-        id = "fopen";
-        set_args_count(2);
+    Len() {
+        id = "len";
+        set_args(1);
     }
 
-    virtual Value run(std::vector<Value> args) override;
+    virtual Value run(Args args) override;
 };
 
-
-class Fgetc : public InBuilt {
+class IsType : public InBuilt {
+private:
+    Type t;
 public:
-    Fgetc() {
-        id = "fgetc";
-        set_args_count(1);
+    IsType(Type t): t(t) {
+        switch (t) {
+            case INT_T: id = "is_int"; break;
+            case FLOAT_T: id = "is_float"; break;
+            case STRING_T: id = "is_str"; break;
+            case BOOL_T: id = "is_bool"; break;
+            case FUNCTION_T: id = "is_func"; break;
+            case ARRAY_T: id = "is_arr"; break;
+            case ANY_T: id = "is_any"; break;
+            default:
+                cout << "Error: invalid datatype specified " << t << endl;
+                exit(6);
+        }
+
+        set_args(1);
     }
-
-    virtual Value run(std::vector<Value> args) override;
-};
-
-class Fputc : public InBuilt {
-public:
-    Fputc() {
-        id = "fputc";
-        set_args_count(2);
-    }
-
-    virtual Value run(std::vector<Value> args) override;
-};
-
-class Fclose : public InBuilt {
-public:
-    Fclose() : InBuilt() {
-        id = "fclose";
-        set_args_count(1);
-    }
-
-    virtual Value run(std::vector<Value> args) override;
+    virtual Value run(Args args) override;
 };
 
 
-class Range : public InBuilt {
-public:
-    Range() {
-        id = "range";
-        set_args_count(1);
-    }
-
-    virtual Value run(std::vector<Value> args) override;
-};
+#endif

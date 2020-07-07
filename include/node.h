@@ -1,412 +1,412 @@
-#pragma once
+#ifndef __NODE_H__
+#define __NODE_H__
 
-#include "buffer.h"
 #include "context.h"
 #include <vector>
 
-extern source::out::stream err;
+#define DEFAULT_MOD_PATH "/usr/lib/source/modules/"
 
-using namespace source;
-enum Oper { ADD, SUB, MUL, DIV, LT, GT, LE, GE, AND, OR, NOT, EQ, NE};
+enum Operator {
+    ADD, SUB, MUL, DIV,
+    LT, GT, LE, GE,
+    AND, OR, NOT, EQ, NE
+};
 
-#define BREAK_STMT 11
-#define CONTINUE_STMT 12
-#define RETURN_STMT 13
+#define BREAK_STATMENT 11
+#define CONTINUE_STATMENT 12
+#define RETURN_STATMENT 13
 
 class Node {
 private:
 protected:
-
+    
 public:
-    Node() {}
-    virtual ~Node() {}
+    string label;
 
+    Node() : label("node") {}
+    virtual ~Node() {}
 };
 
 class Expression : public Node {
 public:
-    virtual Value eval(context::Context* cc) {
-        err << "err[node]: eval not yet implemented in " << typeid(*this).name() << std::endl;
+    virtual Value eval(Context &cc) {
+        cout << "Error: eval not yet implemented in " << typeid(this).name() << endl;
+        cout << label << endl;
         return Value();
     }
 };
 
 class Identifier : public Expression {
 private:
-    std::string value;
-    
-
-    
+    string value;
 public:
-    Identifier(const char* v) : value(v) {}
-    
-    std::string& get() {return value;}
-
-    virtual Value eval(context::Context* cc) override;
+    Identifier(const char* val) : value(val) {
+        label = "identifier(" + value + ")";
+    }
+    string& get() {return value;}
+    virtual Value eval(Context& cc) override;
 };
 
 class Number : public Expression {
 private:
-    std::string value;
-    int ivalue;
-    double dvalue;
-    int x = 0;
+    string value;
 public:
-    Number(const char* val) : value(val) {}
-    Number(int ival) : ivalue(ival) {x = 1;}
-    Number(double dvalue) : dvalue(dvalue) {x = 2;}
-    virtual Value eval(context::Context* cc) override;
-
+    Number(const char* val) : value(val) {
+        label = "number(" + value + ")";
+    }
+    virtual Value eval(Context &cc) override;
 };
 
 class Bool : public Expression {
 private:
     bool value;
 public:
-    Bool(bool val) : value(val) {}
-    virtual Value eval(context::Context* cc) override;
-
+    Bool(bool val) : value(val) {
+        label = "bool(";
+        label += (value ? "true" : "false");
+        label += ")";
+    }
+    virtual Value eval(Context &cc) override;
 };
 
 class String : public Expression {
 private:
-    std::string value;
+    string value;
 public:
-    String(const char* s) : value(s) {}
-    virtual Value eval(context::Context* cc) override;
+    String(const char* s) : value(s) {
+        label = "string(" + value + ")";
+    }
+    virtual Value eval(Context &cc) override;
 };
-
 
 class Array : public Expression {
 private:
-    std::vector<Expression*> *exprs;
-    Identifier* id;
+    vector<Expression*> *value;
 public:
-    Array(std::vector<Expression*> *exprs) : exprs(exprs) {}
-    Array(Identifier* id) : id(id) {}
-    void respr(context::Context* cc, std::ostream& out);
-    virtual Value eval(context::Context* cc) override;
-};
-
-
-class Null : public Expression {
-private:
-public:
-    Null() {}
-    virtual Value eval(context::Context* cc) override {
-        return Value();
+    Array(vector<Expression*> *val) : value(val)
+    {
+        label = "array";
     }
+    virtual Value eval(Context &cc) override;
 };
 
 class Access : public Expression {
 private:
-    Identifier* id;
-    Expression* expr;
+    Expression& expr;
+    Identifier& id;
 public:
-    Access(Identifier* id,Expression* expr) : id(id), expr(expr) {}
-    virtual Value eval(context::Context* cc) override;
+    Access(Identifier& id, Expression& val) : id(id), expr(val)
+    {
+        label = "acess(" + id.get() + ")";
+    }
+    virtual Value eval(Context &cc) override;
 };
 
-class Container : public Expression {
+class Null : public Expression {
 private:
-    std::vector<dict*> *value;
 public:
-    Container(std::vector<dict*> *value) : value(value) {}
-    virtual Value eval(context::Context* cc) override;
+    Null() {
+        label = "null";
+    }
+    virtual Value eval(Context &cc) override {
+        return Value();
+    }
+
 };
-
-class ContainerEval : public Expression {
-private:
-    Expression* cont;
-    Identifier* var;
-public:
-    ContainerEval(Expression* cont, Identifier* var) : cont(cont), var(var) {}
-
-    virtual Value eval(context::Context* cc) override;
-};
-
 
 class Arithmetic : public Expression {
 private:
-    Oper op;
-    Expression *left, *right; 
+    Operator op;
+    Expression &left, &right;
 public:
-    Arithmetic(Expression*left, Oper op, Expression* right)
-    :   left(left), op(op), right(right) {}
+    Arithmetic(Expression &left, Operator op, Expression &right)
+     : left(left), right(right), op(op) {
+         label = "expression";
+     }
 
-    virtual Value eval(context::Context* cc) override;
-
-    virtual ~Arithmetic() { delete left; delete right;}
+     virtual Value eval(Context &cc) override;
 };
 
 class Logical : public Expression {
 private:
-    Oper op;
-    Expression *left, *right; 
+    Operator op;
+    Expression &left, &right;
 public:
-    Logical(Expression*left, Oper op, Expression* right)
-    :   left(left), op(op), right(right) {}
+    Logical(Expression& l, Operator op, Expression& r)
+    : left(l), op(op), right(r) {
+        label = "logical";
+    }
 
-    virtual Value eval(context::Context* cc) override;
-
-    virtual ~Logical() { delete left; delete right;}
+    virtual Value eval(Context &cc) override;
 };
 
 class Compare : public Expression {
 private:
-    Oper op;
-    Expression *left, *right; 
+    Operator op;
+    Expression &left, &right;
 public:
-    Compare(Expression*left, Oper op, Expression* right)
-    :   left(left), op(op), right(right) {}
+    Compare(Expression& l, Operator op, Expression& r)
+    : left(l), op(op), right(r) {
+        label = "compare";
+    }
 
-    virtual Value eval(context::Context* cc) override;
-
-    virtual ~Compare() { delete left; delete right;}
+    virtual Value eval(Context &cc) override;
 };
-
 
 class Negation : public Expression {
 private:
-    Expression *expr;
+    Expression &right;
+
 public:
-    Negation(Expression* expr) : expr(expr) {}
-    virtual Value eval(context::Context* cc) override;
-
-    virtual ~Negation() { delete expr;}
-};
-
-class Clib : public Expression {
-private:
-    std::vector<Expression*> *exprs;
-public:
-    Clib(std::vector<Expression*> *exprs)
-        : exprs(exprs) {}
-    virtual Value eval(context::Context* cc) override;
-
-    virtual ~Clib() { 
-        for(auto a : *exprs) delete a;
-        exprs->clear();
+    Negation(Expression& r)
+    : right(r) {
+        label = "negation";
     }
+
+    virtual Value eval(Context &cc) override;
 };
 
 class Statment : public Node {
 private:
 public:
-    Statment() {}
-    virtual int exec(context::Context *cc) {
-        err << "err[node] exec() not yet implemented for " << typeid(*this).name() << std::endl; 
+    Statment() {
+        label = "statment";
+    }
+
+    virtual int exec(Context& cc) {
+        cout << "Error: exec() not yet implemented for " << typeid(*this).name() << endl;
+        return -1;
     }
 };
 
 class Block : public Statment {
 private:
-    std::vector<Statment*> *body;
+    vector<Statment*> *body;
 public:
-    Block(std::vector<Statment*> *body) : body(body) {}
-    std::vector<Statment*> *get_body() {return body;}
-    virtual int exec(context::Context* cc) override;
+    Block(vector<Statment*> *body) : body(body) {
+        label = "block";
+    }
+
+    vector<Statment*> *get_body() {return body;}
+    virtual int exec(Context& cc) override;
+
     virtual ~Block() {
-        for(auto b : *body) {
-            delete b;
-        }
+        for(auto a : *body) delete a;
         body->clear();
     }
 };
 
-
 class Condition : public Statment {
 private:
-    Expression* expr;
-    Statment* ifblock, *elseBlock;
-
+    Expression &expr;
+    Block &ifblock, *elseblock;
 public:
-    Condition(Expression* expr, Statment* ib, Statment* eb = nullptr)
-    : expr(expr), ifblock(ib), elseBlock(eb) {}
-
-    virtual int exec(context::Context *cc) override;
-    virtual ~Condition() {
-        delete expr;
-        delete ifblock;
-        if (elseBlock) delete elseBlock;
+    Condition(Expression &expr, Block& ib, Block* eb = nullptr)
+    : expr(expr), ifblock(ib), elseblock(eb) {
+        label = "condition";
     }
+
+    virtual int exec(Context& cc) override;
 };
 
-
-enum FOR_LOOP {
-    INLOOP,
-    UNTIL,
-    ARR,
+enum LOOP_T {
+    FOR_LOOP, WHILE_LOOP, IN_LOOP
 };
 
-class Loop : public Statment {
+class Loop: public Statment {
 private:
-    Expression* expr, *arr;
-    Block* body;
-    FOR_LOOP type;
+    Expression& expr;
+    Statment *pre, *incr;
+    Block& body;
     Identifier* id;
+    LOOP_T looptype;
 
 public:
-    Loop(Expression* expr, Block* body)
-        : expr(expr), body(body), type(UNTIL) {}
+    Loop(Expression& expr, Block& body)
+     : expr(expr), body(body), looptype(WHILE_LOOP)
+     { label = "while_loop";}
 
-    Loop(Identifier* id, Expression* arr, Block* body)
-        : id(id), arr(arr), body(body), type(INLOOP) {}
+    Loop(Statment& pre, Expression& expr, Statment& incr, Block& body)
+    : pre(&pre), expr(expr), incr(&incr), looptype(FOR_LOOP), body(body)
+    { label = "for_loop";}
 
-    virtual int exec(context::Context* cc) override;
-    virtual ~Loop() {
-        if (expr) delete expr;
-        if (body) delete body;
-        if (id) delete id;
-        if (arr) delete arr;
-    }
+    Loop(Identifier& id, Expression& expr, Block& body)
+    : id(&id), expr(expr), body(body), looptype(IN_LOOP)
+    { label = "in_loop"; }
+
+    virtual int exec(Context& cc) override;
+
 };
 
 
 class Break : public Statment {
 private:
+
 public:
-    Break() {}
-    virtual int exec(context::Context*cc) { return BREAK_STMT; }
+    Break() { label = "break";}
+    virtual int exec(Context& cc) override {
+        return BREAK_STATMENT;
+    }
 };
 
 class Continue : public Statment {
 private:
+
 public:
-    Continue() {}
-    virtual int exec(context::Context*cc) { return CONTINUE_STMT;}
+    Continue() { label = "continue";}
+    virtual int exec(Context& cc) override {
+        return CONTINUE_STATMENT;
+    }
 };
 
 
 class Return : public Statment {
 private:
-    Expression* expr;
+    Expression& expr;
 public:
-    Return(Expression* expr) : expr(expr) {}
-    virtual int exec(context::Context* cc) override;
+    Return(Expression& expr) 
+    : expr(expr)
+    { label = "return";}
+    virtual int exec(Context& cc) override {
+        cc.st.rebind("ret", expr.eval(cc));
+        return RETURN_STATMENT;
+    }
 };
 
 class Let : public Statment {
 private:
-    Identifier* id;
-    Expression* expr;
-
+    Identifier &id;
+    Expression &expr;
 public:
-    Let(Identifier* id, Expression* expr)
-        : id(id), expr(expr) {}
-
-    virtual int exec(context::Context* cc) override;
-
-    virtual ~Let() {
-        delete id;
-        delete expr;
+    Let(Identifier& id, Expression& expr)
+    :   id(id), expr(expr) {
+        label = "let(" + id.get() + ")";
     }
+    virtual int exec(Context& cc) override;
 };
-
 
 class Assign : public Statment {
 private:
-    Identifier* id;
-    Expression* expr;
-
+    Identifier &id;
+    Expression &expr;
 public:
-    Assign(Identifier* id, Expression* expr)
-        : id(id), expr(expr) {}
+    Assign(Identifier& id, Expression& expr)
+     : id(id), expr(expr) {
+         label = "assign(" + id.get() + ")";
+     }
 
-    virtual int exec(context::Context* cc) override;
-
-    virtual ~Assign() {
-        delete id;
-        delete expr;
-    }
+    virtual int exec(Context& cc) override;
 };
 
 class Print : public Statment {
 private:
-    std::vector<Expression*> *expr;
+    vector<Expression*> *expr;
 public:
-    Print(std::vector<Expression*> *expr) : expr(expr) {}
+    Print(vector<Expression*> *expr) :
+        expr(expr) {
+            label = "print";
+        }
+    virtual int exec(Context& cc) override;
 
-    virtual int exec(context::Context* cc) override;
     virtual ~Print() {
-        for(auto a : *expr) {
-            delete a;
-        }
+        for(auto a : *expr) delete a;
         expr->clear();
     }
 };
 
-
-class Println : public Statment {
-private:
-    std::vector<Expression*> *expr;
-public:
-    Println(std::vector<Expression*> *expr) : expr(expr) {}
-
-    virtual int exec(context::Context* cc) override;
-    virtual ~Println() {
-        for(auto a : *expr) {
-            delete a;
-        }
-        expr->clear();
-    }
-};
-
-class ExpressionStatment : public Statment {
+class ExprStatment : public Statment {
 private:
     Expression* body;
 public:
-    ExpressionStatment(Expression* body) : body(body) {}
+    ExprStatment(Expression* body) :
+        body(body)
+    {
+        label = "expr_statment";
+    }
 
-    virtual int exec(context::Context* cc) override;
-    virtual ~ExpressionStatment() { delete body;}
+    virtual int exec(Context& cc) override;
 };
 
-class Method : public source::MethodDefination, public Expression {
+
+class Method : public MethodDef, public Expression {
 private:
-    std::vector<Identifier*> *id;
+    vector<Identifier*> *id;
     Statment* body;
 public:
     Method() {}
-    Method(std::vector<Identifier*> *id, Statment* body)
-    : id(id), body(body) {}
-
-    std::vector<Identifier*> *get_args() {return id;}
+    Method(vector<Identifier*> *id, Statment *body)
+     : id(id), body(body) {}
+    
+    vector<Identifier*> *get_args() {return id;}
     Statment* get_body() {return body;}
 
-    virtual Value eval(context::Context* cc) override;
-    virtual ~Method() {
-        delete id;
-        delete body;
-    }
+    virtual Value eval(Context& cc) override;
 };
 
 class Call : public Expression {
 private:
-    std::vector<Expression*> *arg;
-    Expression *id;
+    vector<Expression*> &args;
+    Identifier& id;
 public:
-    Call(Expression* id, std::vector<Expression*> *a) : id(id), arg(a) {}
-    virtual Value eval(context::Context* cc) override;
+    Call(Identifier& id, vector<Expression*> &a)
+     : id(id), args(a) {
+         label = "call(" + id.get() + ")";
+     }
+    
+    virtual Value eval(Context &cc) override;
 
-    virtual ~Call() {
-        delete id;
-        for(auto a : *arg) {
-            delete a;
-        }
-        arg->clear();
-    }
 };
-
 
 class Use : public Statment {
 private:
-    String* modname;
+    Identifier& id;
 public:
-    Use(String* md) : modname(md) {}
-
-    virtual int exec(context::Context* cc) override;
-    virtual ~Use() {
-        delete modname;
+    Use(Identifier& id) : id(id) {
+        label = "use(" + id.get() + ")";
     }
+
+    virtual int exec(Context &cc) override;
 };
+
+
+class Debug : public Statment {
+private:
+    Identifier& id;
+public:
+    Debug(Identifier& id) : id(id) {
+        label = "debug(" + id.get() + ")";
+    }
+    virtual int exec(Context &cc) override;
+};
+
+class Container : public ContainerDef, public Expression {
+private:
+    Identifier& id;
+    vector<ContainerData*> data;
+    SymbolTable* st;
+public:
+    Container(Identifier& id, vector<ContainerData*> d)
+    : id(id), data(d) {
+        label = "container(" + id.get() + ")";
+    }
+
+    Value get_val(const string& i) {
+        return st->lookup(i);
+    }
+    
+    virtual Value eval(Context& cc) override;
+};
+
+class ContAccess: public Expression {
+public:
+    Identifier& cont, &cid;
+public:
+    ContAccess(Identifier& c, Identifier& i)
+        : cont(c), cid(i) {
+            label = "cont_access(" + c.get() + ")";
+        }
+    
+    virtual Value eval(Context &cc) override;
+};
+
+#endif
