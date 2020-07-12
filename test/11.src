@@ -1,4 +1,3 @@
 use io;
 
-debug print_st;
-io.println("Hello World");
+io.println("hello World");

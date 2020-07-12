@@ -1,0 +1,12 @@
+let syscall := cont {
+    stdlib : "build/source_syscall.so",
+
+    write : func fd, buf {
+        cmod(stdlib, "Syscall", "write", fd, buf);
+    },
+
+    read : func fd, len {
+        cmod(stdlib, "Syscall", "read", fd, len);
+    }
+
+};

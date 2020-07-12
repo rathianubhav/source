@@ -102,4 +102,23 @@ public:
 };
 
 
+class ListCont : public InBuilt {
+public:
+    ListCont() {
+        id = "listcont";
+        set_args(1);
+    }
+    virtual Value run(Args args) override;
+};
+
+class Range : public InBuilt {
+public:
+    Range() {
+        id = "range";
+        set_args(1);
+    }
+
+    virtual Value run(Args args) override;
+};
+
 #endif

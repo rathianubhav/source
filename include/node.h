@@ -384,8 +384,9 @@ public:
 
 class Container : public ContainerDef, public Expression {
 private:
-    SymbolTable* st;
+    
 public:
+    SymbolTable* st;
     Container(vector<ContainerData*> &d)
     : data(d) {
         label = "container()";

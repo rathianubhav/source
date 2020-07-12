@@ -212,6 +212,8 @@ Container::eval(Context &cc)
         if (f.get_type() == FUNCTION_T) {
             func.method_def->envst = new SymbolTable(st);
         }
+
+
         if (!st->isdefined(a->first->get()))
             st->bind(a->first->get(),a->second->eval(ccc));
         else

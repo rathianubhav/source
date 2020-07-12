@@ -1,6 +1,7 @@
-let stdlib := "/lib/libc.so";
+use syscall;
 
-let println := func mesg {
-    print(stdlib,"\n");
-    print(mesg,"\n");
+let io := cont {
+    println : func mesg {
+        syscall.write(1, mesg + "\n");
+    }
 };

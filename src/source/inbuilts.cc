@@ -10,6 +10,8 @@ vector<InBuilt*> inbuilts = vector<InBuilt*>
     new Len(),
     new IsType(INT_T), new IsType(FLOAT_T), new IsType(STRING_T), new IsType(BOOL_T), new IsType(FUNCTION_T), new IsType(ARRAY_T), new IsType(ANY_T),
     new Typeof(),
+    new ListCont(),
+    new Range(),
 };
 
 Value
@@ -75,4 +77,56 @@ Value
 Typeof::run(Args args)
 {
     return Value(args.at(0).get_type_str());
+}
+
+Value
+ListCont::run(Args args)
+{
+    Value contval = args.at(0);
+    Container* cont = contval.Container().container_def;
+    if (!cont) {
+        cout << "cont is null" << endl;
+    }
+
+    auto cv = cont->data;
+    // if (!cont->data) {
+    //     cout << "cont->data is null" <<endl;
+    // }
+    return Value();
+}
+
+Value
+Range::run(Args args)
+{
+    Value var = args.at(0);
+    vector<Expression*> *arr = new vector<Expression*>();
+
+    switch (var.get_type()) {
+        case INT_T: {
+            for(int i = 0; i < var.Int(); i++) {
+                arr->push_back(new Number(to_string(i).c_str()));
+            }
+            break;
+        case FLOAT_T:
+            for(float i = 0.0; i < var.Float(); i += 1.0) {
+                arr->push_back(new Number(to_string(i).c_str()));
+            }
+            break;
+        case STRING_T:
+            for(auto a : var.String()) {
+                arr->push_back(new String(string(1,a).c_str()));
+            }
+            break;
+        case ARRAY_T:
+            for(auto a : *var.Array()) {
+                arr->push_back(a);
+            }
+            break;
+        default:
+            cout << "invalid value of type " << var.get_type_str() << endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    return Value(arr);
 }
