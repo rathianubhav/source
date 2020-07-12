@@ -1,6 +1,6 @@
-let syscall := cont {
-    stdlib : "build/source_syscall.so",
+let stdlib := clibpath + "syscall.so";
 
+let syscall := cont {
     write : func fd, buf {
         cmod(stdlib, "Syscall", "write", fd, buf);
     },

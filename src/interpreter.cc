@@ -27,6 +27,8 @@ interprete(const char* filename)
         cc.st.bind(a->get_id(), Value(a, nullptr));
     }
 
+    cc.st.bind("clibpath",  Value(string(SRC_CLIB)));
+
     vector<Statment*> program;
 
     if (interactive) {

@@ -4,8 +4,6 @@
 #include "context.h"
 #include <vector>
 
-#define DEFAULT_MOD_PATH "/usr/lib/source/modules/"
-
 enum Operator {
     ADD, SUB, MUL, DIV,
     LT, GT, LE, GE,

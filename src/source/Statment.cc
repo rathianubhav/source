@@ -1,6 +1,6 @@
 #include <node.h>
 #include <releax>
-
+#include <source.h>
 int
 Block::exec(Context &cc)
 {
@@ -140,7 +140,7 @@ Use::exec(Context& cc)
 
     char* c = getenv("SRC_MOD");
     if (c == NULL) {
-        c = DEFAULT_MOD_PATH;
+        c = SRC_MOD;
     }
 
 
