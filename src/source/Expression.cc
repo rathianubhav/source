@@ -1,10 +1,46 @@
 #include <node.h>
 #include <sstream>
 #include <map>
+#include <sstream>
+#include <unistd.h>
+#include <dlfcn.h>
 
 Value
 Identifier::eval(Context& cc)
 {
+    int rindex = value.rfind('.');
+    if (rindex != string::npos) {
+        // '.' -> container call
+        stringstream ss(value);
+        string curcont;
+        vector<string> contlist;
+
+        while(getline(ss, curcont, '.')) {
+            cout << "pushing " << curcont << endl;
+            contlist.push_back(curcont);
+        }
+
+        cout << "Containers Count: " << contlist.size() << endl;
+
+        SymbolTable* curst = &cc.st;
+        string last = contlist.at(contlist.size() - 1);
+        cout << "Last Element: " << last << endl;
+        contlist.erase(contlist.end());
+        for(auto c : contlist) {
+            cout << "checking container " << c << endl;
+            if(!curst->isdefined(c)) {
+                cout << "container " << c << " is not defined" << endl;
+            }
+
+            Value contval = curst->lookup(c);
+            Value::check_type(contval, CONTAINER_T);
+            curst = contval.Container().environment;
+        }
+
+        cout << "is defined: " <<curst->isdefined(last) << endl;
+        curst->print();
+        return curst->lookup(last);
+    } else
     return cc.st.lookup(value);
 }
 
@@ -121,19 +157,15 @@ Negation::eval(Context& cc)
 }
 
 Value
-Method::eval(Context& cc)
-{
-    return Value(this, &cc.st);
-}
-
-Value
 Call::eval(Context& cc)
 {
+
     Value func_value = id.eval(cc);
     Value::check_type(func_value, FUNCTION_T);
 
     Closure func = func_value.Function();
     SymbolTable fcst(&cc.st);
+
     Context fc(fcst);
 
     fc.st.bind("ret", Value());
@@ -142,6 +174,9 @@ Call::eval(Context& cc)
 
     int fnc = reqargs->size(),
         clc = args.size();
+
+
+    cout << "I am working here" << endl;
 
     int min = fnc < clc ? fnc : clc;
     for(int i = 0; i < min; i++) {
@@ -183,8 +218,46 @@ Container::eval(Context &cc)
 Value
 ContAccess::eval(Context& cc)
 {
-    Value ccon = cont.eval(cc);
-    Value::check_type(ccon, CONTAINER_T);
+    Value container = cont.eval(cc);
+    Value::check_type(container, CONTAINER_T);
+    return container.Container().container_def->get_val(cid.get());
+}
 
-    return ccon.Container().container_def->get_val(cid.get());
+Value
+Cmod::eval(Context& cc)
+{
+    if (exprs.size() <= 1) {
+        cout << "Error: cmod() require atleast 2 arguments but provided " << exprs.size() << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    Value (*cfunc_ptr)(vector<Value>&);
+
+    Value clib = exprs.at(0)->eval(cc);
+    Value::check_type(clib, STRING_T);
+    Value cfunc = exprs.at(1)->eval(cc);
+    Value::check_type(cfunc, STRING_T);
+
+    void* handler = dlopen(clib.String().c_str(), 0x00001);
+    if (handler == NULL) {
+        cout << "Error: dlopen() unable to load specified library '" << clib.String() << "' - " << dlerror() << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    cfunc_ptr = (Value(*)(vector<Value>&)) dlsym(handler, cfunc.String().c_str());
+    if (cfunc_ptr == NULL) {
+        cout << "Error: dlsym() unable to load '" << cfunc.String() << "' symbol - " << dlerror() << endl; 
+        exit(EXIT_FAILURE);
+    }
+
+    vector<Value> args;
+    for(auto i = exprs.begin() + 2; i != exprs.end(); i++) {
+        auto e = *i;
+        args.push_back(e->eval(cc));
+    }
+
+    Value retval = cfunc_ptr(args);
+    dlclose(handler);
+
+    return retval;
 }

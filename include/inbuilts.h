@@ -92,5 +92,14 @@ public:
     virtual Value run(Args args) override;
 };
 
+class Typeof : public InBuilt {
+public:
+    Typeof() {
+        id = "typeof";
+        set_args(1);
+    }
+    virtual Value run(Args args) override;
+};
+
 
 #endif

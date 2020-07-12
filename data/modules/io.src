@@ -1,11 +1,17 @@
-let Print := func mesg {
-    if is_arr(mesg) {
-        print("[");
-        for i in mesg {
-            print(i);
+let io := cont str {
+    Print : func mesg {
+        if is_arr(mesg) {
+            print("[");
+            for i in mesg { print(i); }
+            print("]");
+        } else {
+            print(mesg,"\n");
         }
-        print("]");
-    } else {
-        print(mesg, "\n");
+        ret len(mesg);
+    },
+    
+    Scan : func {
+          
     }
+    
 };

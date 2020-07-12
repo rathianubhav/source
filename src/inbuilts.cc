@@ -9,6 +9,7 @@ vector<InBuilt*> inbuilts = vector<InBuilt*>
     new Append(),
     new Len(),
     new IsType(INT_T), new IsType(FLOAT_T), new IsType(STRING_T), new IsType(BOOL_T), new IsType(FUNCTION_T), new IsType(ARRAY_T), new IsType(ANY_T),
+    new Typeof(),
 };
 
 Value
@@ -68,4 +69,10 @@ Value
 IsType::run(Args args)
 {
     return Value(t == args.at(0).get_type());
+}
+
+Value
+Typeof::run(Args args)
+{
+    return Value(args.at(0).get_type_str());
 }

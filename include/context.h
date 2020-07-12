@@ -7,8 +7,9 @@ class Context {
 public:
     int loop = 0;
     int func = 0;
+    int cont = 0;
     SymbolTable st;
-
+    
     Context() : st(SymbolTable(nullptr)) {}
     Context(SymbolTable st) : st(st) {}
 };

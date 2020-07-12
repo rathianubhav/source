@@ -45,7 +45,7 @@ void yyerror(const char* e);
 %token ASSIGN NOTTOK
 %token LET IN
 %token IF ELSE FOR FUNC CONT
-%token PRINT USE DEBUG
+%token PRINT USE DEBUG CMOD
 %token NULL_T BREAK CONTINUE RETURN
 
 %type<expr> value expr
@@ -133,6 +133,7 @@ expr
 | method_expr
 | cont_expr
 | call_expr
+| CMOD '(' exprs ')' {$$=new Cmod($3);}
 | '(' expr ')' {$$=$2;}
 | NULL_T {$$=new Null();}
 ;
@@ -151,8 +152,8 @@ method_expr
 
 cont_expr
 : CONT ID '{' defs '}' {$$=new Container(*$2, *$4);}
-| ID '.' ID {$$=new ContAccess(*$1, *$3);}
 ;
+
 
 defs
 : defs ',' def {$$=$1; $$->push_back($3);}
@@ -164,7 +165,7 @@ def
 ;
 
 call_expr
-: ID '(' exprs ')' {$$=new Call(*$1, *$3);}
+: expr '(' exprs ')' {$$=new Call(*$1, *$3);}
 ;
 
 exprs

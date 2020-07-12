@@ -15,7 +15,7 @@ class Statment;
 class Identifier;
 class Expression;
 class Value;
-
+class Container;
 
 enum Type {
     INT_T, FLOAT_T, BOOL_T, NONE_T, STRING_T, ANY_T,
@@ -32,7 +32,7 @@ public:
 
 class ContainerClosure {
 public:
-    ContainerDef *container_def;
+    Container *container_def;
     SymbolTable* environment;
 };
 
@@ -44,7 +44,7 @@ public:
 
 class Closure {
 public:
-    MethodDef* method_def;
+    Method* method_def;
     SymbolTable* environment;
 };
 
@@ -106,14 +106,14 @@ public:
     explicit Value(const string& s) { type=STRING_T; value.String = new string(s);}
     explicit Value(void* v) { type=ANY_T; value.Any = v;}
     explicit Value(vector<Expression*> *arr) { type = ARRAY_T; value.Array = arr;}
-    explicit Value(MethodDef* f, SymbolTable* env)
+    explicit Value(Method* f, SymbolTable* env)
     {
         type = FUNCTION_T;
         value.Function.method_def = f;
         value.Function.environment = env;
     }
 
-    explicit Value(ContainerDef* c, SymbolTable* env)
+    explicit Value(Container* c, SymbolTable* env)
     {
         type = CONTAINER_T;
         value.Container.container_def = c;

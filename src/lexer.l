@@ -69,13 +69,13 @@ true|false yylval.expr = new Bool(yytext[0] == 't'); return BOOL;
 "ret" return RETURN;
 
 "debug" return DEBUG;
-
+"cmod" return CMOD;
 
 "null" return NULL_T;
 "print" return PRINT;
 
 [ \t\v\n\r\f] ;
-[a-zA-Z_][a-zA-Z_0-9]* yylval.id = new Identifier(yytext); return ID;
+[a-zA-Z_][a-zA-Z_0-9.]* yylval.id = new Identifier(yytext); return ID;
 ([0-9]*[.])?[0-9]+ yylval.num = new Number(yytext); return NUM;
 ["][^"]*["] yylval.str = new String(trim(yytext)); return STRING;
 "#!".* ;

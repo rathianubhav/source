@@ -1,6 +1,11 @@
-use io;
-let arr := ["Hello world"];
-Print(arr);
+let c := cont atr {
+    z : cont art {
+        f : cont atr {
+            x : "hello"
+        }
+    },
+    
+    t : "hello"
+};
 
-arr := append(arr, 5);
-Print(arr);
+print(c.z.f);

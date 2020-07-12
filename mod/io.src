@@ -1,0 +1,7 @@
+let println := func line, del {
+    if del == null {
+        del := "\n";
+    }
+
+    cmod("./build/source_syscall.so", "Syscall","write")(1, line);
+};

@@ -141,7 +141,9 @@ Use::exec(Context& cc)
         c = DEFAULT_MOD_PATH;
     }
 
-    for (auto a : vector<string> {"./", c}) {
+
+    for (auto a : vector<string> {"./", "./mod/", c,}) {
+        //cout << "checking " << a + "/" + mod + ".src" << endl;
         if (releax::is_exist(a + "/" + mod + ".src")) {
             mod = a + "/" + mod + ".src";
             break;
@@ -160,7 +162,7 @@ Use::exec(Context& cc)
         c->exec(cc);
     }
 
-    //fclose(yyin);
+    fclose(yyin);
     yyin = oldptr;
 
     return 0;

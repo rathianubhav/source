@@ -340,17 +340,19 @@ public:
     vector<Identifier*> *get_args() {return id;}
     Statment* get_body() {return body;}
 
-    virtual Value eval(Context& cc) override;
+    virtual Value eval(Context& cc) {
+        return Value(this, &cc.st);
+    }
 };
 
 class Call : public Expression {
 private:
     vector<Expression*> &args;
-    Identifier& id;
+    Expression& id;
 public:
-    Call(Identifier& id, vector<Expression*> &a)
+    Call(Expression& id, vector<Expression*> &a)
      : id(id), args(a) {
-         label = "call(" + id.get() + ")";
+         label = "call()";
      }
     
     virtual Value eval(Context &cc) override;
@@ -382,13 +384,14 @@ public:
 class Container : public ContainerDef, public Expression {
 private:
     Identifier& id;
-    vector<ContainerData*> data;
     SymbolTable* st;
 public:
-    Container(Identifier& id, vector<ContainerData*> d)
+    Container(Identifier& id, vector<ContainerData*> &d)
     : id(id), data(d) {
         label = "container(" + id.get() + ")";
     }
+
+    vector<ContainerData*> &data;
 
     Value get_val(const string& i) {
         return st->lookup(i);
@@ -397,16 +400,28 @@ public:
     virtual Value eval(Context& cc) override;
 };
 
-class ContAccess: public Expression {
+class ContAccess : public Expression {
+private:
+    Expression& cont;
+    Identifier &cid;
 public:
-    Identifier& cont, &cid;
-public:
-    ContAccess(Identifier& c, Identifier& i)
-        : cont(c), cid(i) {
-            label = "cont_access(" + c.get() + ")";
-        }
-    
-    virtual Value eval(Context &cc) override;
+    ContAccess(Expression& c, Identifier& i) : cont(c), cid(i) {
+        label = "ContainerAccess";
+    }
+
+    virtual Value eval(Context& cc) override;
 };
+
+class Cmod : public Expression {
+private:
+    vector<Expression*> &exprs;
+public:
+    Cmod(vector<Expression*> *exprs) : exprs(*exprs) {
+        label = "cmod()";
+    }
+
+    virtual Value eval(Context& cc) override;
+};
+
 
 #endif
