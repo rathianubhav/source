@@ -136,6 +136,8 @@ Use::exec(Context& cc)
 
     string mod = id.get();
 
+    string modename = mod;
+
     char* c = getenv("SRC_MOD");
     if (c == NULL) {
         c = DEFAULT_MOD_PATH;
@@ -158,9 +160,41 @@ Use::exec(Context& cc)
     yyin = fopen(mod.c_str(), "r");
     yyparse();
 
+    SymbolTable modst = SymbolTable(&cc.st);
+    auto modcc = Context(modst);
+
     for(auto c : *tree) {
-        c->exec(cc);
+        c->exec(modcc);
     }
+
+    auto d = vector<ContainerData*>();
+    for(auto s : modcc.st.bindings) {
+        auto val = s.second;
+        auto x = new ContainerData();
+        x->first = new Identifier(s.first.c_str());
+        switch (val.get_type()) {
+            case INT_T:
+            case FLOAT_T:
+                x->second = new Number(to_string(val.Int()).c_str());   break;
+            case STRING_T:
+                x->second = new String(val.String().c_str());   break;
+            case BOOL_T:
+                x->second = new Bool(val.Bool()); break;
+            case FUNCTION_T:
+                x->second = val.Function().method_def; break;
+            case CONTAINER_T:
+                x->second = val.Container().container_def; break;
+
+            default:
+                cout << "invalid value in module" << endl;
+                exit(EXIT_FAILURE);
+        }
+
+        d.push_back(x);
+    }
+
+    Value con = Container(d).eval(cc);
+    cc.st.bind(modename, con);
 
     fclose(yyin);
     yyin = oldptr;

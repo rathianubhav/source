@@ -1,7 +1,6 @@
-let println := func line, del {
-    if del == null {
-        del := "\n";
-    }
+let stdlib := "/lib/libc.so";
 
-    cmod("./build/source_syscall.so", "Syscall","write")(1, line);
+let println := func mesg {
+    print(stdlib,"\n");
+    print(mesg,"\n");
 };

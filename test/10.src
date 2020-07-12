@@ -1,5 +1,5 @@
-let c := cont hello {
-    i : cont str {
+let c := cont {
+    i : cont {
         j : "world"
     },
     x : "string",

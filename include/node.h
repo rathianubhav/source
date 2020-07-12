@@ -384,12 +384,11 @@ public:
 
 class Container : public ContainerDef, public Expression {
 private:
-    Identifier& id;
     SymbolTable* st;
 public:
-    Container(Identifier& id, vector<ContainerData*> &d)
-    : id(id), data(d) {
-        label = "container(" + id.get() + ")";
+    Container(vector<ContainerData*> &d)
+    : data(d) {
+        label = "container()";
     }
 
     vector<ContainerData*> &data;

@@ -1,0 +1,4 @@
+use io;
+
+debug print_st;
+io.println("Hello World");

@@ -151,7 +151,7 @@ method_expr
 ;
 
 cont_expr
-: CONT ID '{' defs '}' {$$=new Container(*$2, *$4);}
+: CONT '{' defs '}' {$$=new Container(*$3);}
 ;
 
 
