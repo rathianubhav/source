@@ -5,8 +5,10 @@ let c := cont hello {
     x : "string",
 
     test : func hello {
-        print(x);
+        debug print_st;
+        print(hello,"hello", x);
     }
 };
+
 
 c.test("hello");

@@ -165,7 +165,7 @@ def
 ;
 
 call_expr
-: expr '(' exprs ')' {$$=new Call(*$1, *$3);}
+: ID '(' exprs ')' {$$=new Call(*$1, *$3);}
 ;
 
 exprs

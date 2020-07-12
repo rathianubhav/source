@@ -333,6 +333,7 @@ private:
     vector<Identifier*> *id;
     Statment* body;
 public:
+    SymbolTable* envst;
     Method() {}
     Method(vector<Identifier*> *id, Statment *body)
      : id(id), body(body) {}
@@ -348,11 +349,11 @@ public:
 class Call : public Expression {
 private:
     vector<Expression*> &args;
-    Expression& id;
+    Identifier& id;
 public:
-    Call(Expression& id, vector<Expression*> &a)
+    Call(Identifier& id, vector<Expression*> &a)
      : id(id), args(a) {
-         label = "call()";
+         label = "call(" + id.get() + ")";
      }
     
     virtual Value eval(Context &cc) override;

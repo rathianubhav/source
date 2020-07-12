@@ -160,7 +160,15 @@ Call::eval(Context& cc)
     Value::check_type(func_value, FUNCTION_T);
 
     Closure func = func_value.Function();
-    SymbolTable fcst(&cc.st);
+
+    SymbolTable* curst;
+
+    if (func.method_def->envst) {
+        curst = func.method_def->envst;
+    } else {
+        curst = &cc.st;
+    }
+    SymbolTable fcst(curst);
 
     Context fc(fcst);
 
@@ -170,9 +178,6 @@ Call::eval(Context& cc)
 
     int fnc = reqargs->size(),
         clc = args.size();
-
-
-    cout << "I am working here" << endl;
 
     int min = fnc < clc ? fnc : clc;
     for(int i = 0; i < min; i++) {
@@ -202,6 +207,11 @@ Container::eval(Context &cc)
     Context ccc(st);
 
     for(auto a : data) {
+        Value f = a->second->eval(cc);
+        Closure func =  a->second->eval(cc).Function();
+        if (f.get_type() == FUNCTION_T) {
+            func.method_def->envst = new SymbolTable(st);
+        }
         if (!st->isdefined(a->first->get()))
             st->bind(a->first->get(),a->second->eval(ccc));
         else

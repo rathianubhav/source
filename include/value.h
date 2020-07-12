@@ -58,7 +58,7 @@ private:
         string* String;
         void* Any;
         Closure Function;
-        ContainerClosure Container;
+        ContainerClosure CClosure;
         vector<Expression*> *Array;
     } value;
 
@@ -116,8 +116,8 @@ public:
     explicit Value(Container* c, SymbolTable* env)
     {
         type = CONTAINER_T;
-        value.Container.container_def = c;
-        value.Container.environment = env;
+        value.CClosure.container_def = c;
+        value.CClosure.environment = env;
     }
 
     Type get_type() {return type;}
@@ -133,7 +133,7 @@ public:
     void* Any() {return value.Any;}
     vector<Expression*> *Array() {return value.Array;}
     Closure Function() {return value.Function;}
-    ContainerClosure Container() {return value.Container;}
+    ContainerClosure Container() {return value.CClosure;}
 
 
 
