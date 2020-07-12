@@ -16,29 +16,25 @@ Identifier::eval(Context& cc)
         vector<string> contlist;
 
         while(getline(ss, curcont, '.')) {
-            cout << "pushing " << curcont << endl;
             contlist.push_back(curcont);
         }
 
-        cout << "Containers Count: " << contlist.size() << endl;
 
         SymbolTable* curst = &cc.st;
         string last = contlist.at(contlist.size() - 1);
-        cout << "Last Element: " << last << endl;
+
         contlist.erase(contlist.end());
         for(auto c : contlist) {
-            cout << "checking container " << c << endl;
+
             if(!curst->isdefined(c)) {
                 cout << "container " << c << " is not defined" << endl;
+                exit(EXIT_FAILURE);
             }
 
             Value contval = curst->lookup(c);
             Value::check_type(contval, CONTAINER_T);
             curst = contval.Container().environment;
         }
-
-        cout << "is defined: " <<curst->isdefined(last) << endl;
-        curst->print();
         return curst->lookup(last);
     } else
     return cc.st.lookup(value);
