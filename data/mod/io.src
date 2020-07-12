@@ -1,0 +1,11 @@
+use syscall;
+
+let io := cont {
+    Print : func mesg {
+        syscall.write(1, mesg);
+    },
+    
+    Println : func mesg {
+        syscall.write(1, mesg + "\n");
+    }
+};

@@ -1,0 +1,14 @@
+let c := cont {
+    i : cont {
+        j : "world"
+    },
+    x : "string",
+
+    test : func hello {
+        debug print_st;
+        print(hello,"hello", x);
+    }
+};
+
+
+c.test("hello");

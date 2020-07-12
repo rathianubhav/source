@@ -1,0 +1,11 @@
+let c := cont atr {
+    z : cont art {
+        f : cont atr {
+            x : "hello"
+        }
+    },
+    
+    t : "hello"
+};
+
+print(c.z.f);
