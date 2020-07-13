@@ -234,13 +234,6 @@ Container::eval(Context &cc)
     return Value(this, st);
 }
 
-Value
-ContAccess::eval(Context& cc)
-{
-    Value container = cont.eval(cc);
-    Value::check_type(container, CONTAINER_T);
-    return container.CContainer().container_def->get_val(cid.get());
-}
 
 Value
 Cmod::eval(Context& cc)
@@ -279,4 +272,20 @@ Cmod::eval(Context& cc)
     dlclose(handler);
 
     return retval;
+}
+
+Value
+ContainerInstance::eval(Context& cc)
+{
+    ContainerClosure container = id.eval(cc).CContainer();
+    auto contst = new SymbolTable(*container.environment);
+    Container c(data);
+
+    for(auto a : data) {
+        if (contst->isdefined(a->first->get()))
+            contst->rebind(a->first->get(), a->second->eval(cc));
+        else
+            contst->bind(a->first->get(), a->second->eval(cc));
+    }
+    return Value(&c, contst);
 }
