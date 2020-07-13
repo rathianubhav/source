@@ -153,6 +153,7 @@ method_expr
 
 cont_expr
 : CONT '{' defs '}' {$$=new Container(*$3);}
+| ID '{' defs '}' {$$=new ContainerInstance(*$1, *$3);}
 ;
 
 
