@@ -84,7 +84,7 @@ Value
 ListCont::run(Args args)
 {
     Value contval = args.at(0);
-    Container* cont = contval.Container().container_def;
+    Container* cont = contval.CContainer().container_def;
     if (!cont) {
         cout << "cont is null" << endl;
     }

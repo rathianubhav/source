@@ -75,13 +75,13 @@ private:
 public:
     IsType(Type t): t(t) {
         switch (t) {
-            case INT_T: id = "is_int"; break;
-            case FLOAT_T: id = "is_float"; break;
-            case STRING_T: id = "is_str"; break;
-            case BOOL_T: id = "is_bool"; break;
-            case FUNCTION_T: id = "is_func"; break;
-            case ARRAY_T: id = "is_arr"; break;
-            case ANY_T: id = "is_any"; break;
+            case INT_T: id = "isint"; break;
+            case FLOAT_T: id = "isfloat"; break;
+            case STRING_T: id = "isstr"; break;
+            case BOOL_T: id = "isbool"; break;
+            case FUNCTION_T: id = "isfunc"; break;
+            case ARRAY_T: id = "isarr"; break;
+            case ANY_T: id = "isany"; break;
             default:
                 cout << "Error: invalid datatype specified " << t << endl;
                 exit(6);

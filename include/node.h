@@ -312,6 +312,16 @@ public:
     }
 };
 
+class Read : public Expression {
+private:
+public:
+    Read() {
+        label = "read";
+    }
+
+    virtual Value eval(Context& cc) override;
+};
+
 
 class ExprStatment : public Statment {
 private:

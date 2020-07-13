@@ -133,7 +133,7 @@ public:
     void* Any() {return value.Any;}
     vector<Expression*> *Array() {return value.Array;}
     Closure Function() {return value.Function;}
-    ContainerClosure Container() {return value.CClosure;}
+    ContainerClosure CContainer() {return value.CClosure;}
 
 
 

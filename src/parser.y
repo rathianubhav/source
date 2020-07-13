@@ -45,7 +45,7 @@ void yyerror(const char* e);
 %token ASSIGN NOTTOK
 %token LET IN
 %token IF ELSE FOR FUNC CONT
-%token PRINT USE DEBUG CMOD
+%token PRINT USE DEBUG CMOD READ
 %token NULL_T BREAK CONTINUE RETURN
 
 %type<expr> value expr
@@ -133,6 +133,7 @@ expr
 | method_expr
 | cont_expr
 | call_expr
+| READ {$$=new Read();}
 | CMOD '(' exprs ')' {$$=new Cmod($3);}
 | '(' expr ')' {$$=$2;}
 | NULL_T {$$=new Null();}

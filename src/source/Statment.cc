@@ -47,7 +47,6 @@ Print::exec(Context &cc)
 {
     for(auto a : * expr) {
         a->eval(cc).repr(cout);
-        cout << " ";
     }
     return 0;
 }

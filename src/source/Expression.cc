@@ -33,7 +33,7 @@ Identifier::eval(Context& cc)
 
             Value contval = curst->lookup(c);
             Value::check_type(contval, CONTAINER_T);
-            curst = contval.Container().environment;
+            curst = contval.CContainer().environment;
         }
         return curst->lookup(last);
     } else
@@ -63,6 +63,7 @@ String::eval(Context& cc)
             switch (value.at(i + 1)) {
                 case 'n': ss << '\n'; i++; break;
                 case 't': ss << "\t"; i++; break;
+                case 'b': ss << "\b"; i++; break;
                 case '"': ss << '\"'; i++; break;
                 default:  ss << '\\';
             }
@@ -153,6 +154,16 @@ Negation::eval(Context& cc)
 }
 
 Value
+Read::eval(Context& cc)
+{
+    string readin;
+    getline(cin, readin);
+    if (isInt(readin)) return Value(atoi(readin.c_str()));
+    if (isFloat(readin)) return Value((float)atof(readin.c_str()));
+    return Value(readin);
+}
+
+Value
 Call::eval(Context& cc)
 {
 
@@ -228,7 +239,7 @@ ContAccess::eval(Context& cc)
 {
     Value container = cont.eval(cc);
     Value::check_type(container, CONTAINER_T);
-    return container.Container().container_def->get_val(cid.get());
+    return container.CContainer().container_def->get_val(cid.get());
 }
 
 Value
