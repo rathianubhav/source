@@ -121,4 +121,14 @@ public:
     virtual Value run(Args args) override;
 };
 
+class Delete : public InBuilt {
+public:
+    Delete() {
+        id = "delete";
+        set_args(2);
+    }
+
+    virtual Value run(Args args) override;
+};
+
 #endif

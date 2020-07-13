@@ -12,6 +12,7 @@ vector<InBuilt*> inbuilts = vector<InBuilt*>
     new Typeof(),
     new ListCont(),
     new Range(),
+    new Delete(),
 };
 
 Value
@@ -129,4 +130,23 @@ Range::run(Args args)
     }
 
     return Value(arr);
+}
+
+Value
+Delete::run(Args args)
+{
+    Value cont = args.at(0);
+    Value indx = args.at(1);
+
+    Value::check_type(cont, ARRAY_T);
+    Value::check_type(indx, INT_T);
+    vector<Expression*> *vect = cont.Array();
+    int index = indx.Int();
+    if (vect->size() <= index) {
+        cout << "Error: out-of-index | Size of array is " << vect->size() << " and index " << index << endl;
+        return Value();
+    }
+
+    vect->erase(vect->begin() + index);
+    return Value(vect);
 }
