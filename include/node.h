@@ -410,13 +410,14 @@ public:
     virtual Value eval(Context& cc) override;
 };
 
-class ContAccess : public Expression {
+class ContainerInstance : public Expression {
 private:
-    Expression& cont;
-    Identifier &cid;
+    Identifier& id;
+    vector<ContainerData*> &data;
 public:
-    ContAccess(Expression& c, Identifier& i) : cont(c), cid(i) {
-        label = "ContainerAccess";
+    ContainerInstance(Identifier& id, vector<ContainerData*> &data)
+     : id(id), data(data) {
+         label = "container_instance";
     }
 
     virtual Value eval(Context& cc) override;
