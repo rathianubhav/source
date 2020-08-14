@@ -1,0 +1,12 @@
+program ::= { <statment> }
+
+statment ::= <letstmt>
+			 <exprstmt>
+
+letstmt ::= 'let' <id> '=' <expr> ';'
+
+exprstmt ::= <expr> ';'
+
+expr ::= <str>
+	 ::= <num>
+	 ::= <id>
