@@ -1,8 +1,6 @@
 #include <source/parser.hh>
-#include <releax/releax>
 
 using namespace source;
-using namespace releax;
 
 void
 parser::obj::eat_token()
