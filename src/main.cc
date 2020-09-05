@@ -44,18 +44,16 @@ start_engine(bool interactive, MODE m = FULL)
     }
 
     if (interactive) {
-        io::info("Interactive Mode ", __mode_mesg);
-        io::info("Source shell, input statment to execute");
 
         do {
-            io::print(">> ");
+            cout << ">> ";
             getline(std::cin, input);
             lexer::obj __lexer__(input);
 
             if (m == LEXER) {
                 auto _t = __lexer__.next_token();
                 while(_t.get_type() != token::eof) {
-                    io::println("[",_t.get_lit(),":",_t.get_type(),"]");
+                    cout << "[" << _t.get_lit() << ":" << _t.get_type() << "]" << endl;
                     _t = __lexer__.next_token();
                 }
             } else {
@@ -66,7 +64,7 @@ start_engine(bool interactive, MODE m = FULL)
                          i != __prog__->stmts.end();
                          i++)
                     {
-                        io::info(i->get()->label());
+                        cout << i->get()->label() << endl;
                     }
                 } else {
                     for(auto i = __prog__->stmts.begin();
