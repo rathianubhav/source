@@ -1,7 +1,5 @@
 #include <source/lexer.hh>
-#include <releax/releax>
 
-using namespace releax;
 using namespace source;
 
 bool

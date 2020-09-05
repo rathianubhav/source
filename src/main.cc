@@ -1,11 +1,9 @@
 #include <bits/stdc++.h>
 #include <source/parser.hh>
 #include <source/context.hh>
-#include <releax/releax>
 
 using namespace std;
 using namespace source;
-using namespace releax;
 
 int debug = 0;
 
@@ -84,30 +82,6 @@ start_engine(bool interactive, MODE m = FULL)
     }
 }
 
-int
-lexer_func(app::obj& ref)
-{
-    start_engine(true, LEXER);
-    return 0;
-}
-
-int
-label_func(app::obj& ref)
-{
-
-    start_engine(true, LABEL);
-
-
-    return 0;
-}
-
-int
-__main_func(app::obj& ref)
-{
-    start_engine(true);
-
-    return 0;
-}
 
 
 
@@ -115,15 +89,22 @@ __main_func(app::obj& ref)
 int
 main(int ac, char** av)
 {
+    bool interactive_mode = (ac <= 1);
+    MODE __mode__ = FULL;
+    std::string __file_name__;
 
-    app::obj srcapp(ac, av);
+    for(int i = 1; i < ac; i++) {
+        std::string args(av[i]);
+        if (args[0] == '-') {
+            if (args.substr(1, args.length() - 1) == "lexer") __mode__ = LEXER;
+            else if (args.substr(1, args.length() - 1) == "label") __mode__ = LABEL;
+            else 
+                throw std::runtime_error("Invalid argument");
+        } else {
+            __file_name__ = args;
+            interactive_mode = false;
+        }
+    }
 
-    srcapp.id("source")
-          .ver("0.1.0")
-          .about("a simple and efficient programming language")
-          .sub("lex","lexically analysic the source file","[filename]",lexer_func)
-          .sub("label","print labels or ast","[filename]",label_func)
-          .main(__main_func);
-
-    return srcapp.run().status();
+    start_engine(interactive_mode, __mode__);
 }
