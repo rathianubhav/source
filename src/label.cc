@@ -19,3 +19,19 @@ let::label()
             id->label() + ":" +
             val->label() + ")";
 }
+
+string 
+assign::label()
+{
+    return "assign(" +
+            id->label() + ":" +
+            val->label() + ")";
+}
+
+string
+binexpr::label()
+{
+    return "bin(" +
+            left->label() + token::tok_to_str(oper) +
+            right->label() + ")";
+}

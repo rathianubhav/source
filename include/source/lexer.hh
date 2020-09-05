@@ -7,39 +7,45 @@ using namespace std;
 namespace source {
     namespace token {
         typedef enum {
-            ILLEGAL,
-            TEOF,
-            IDENT,
-            INT,
-            ASSIGN,
-            PLUS,
-            MINUS,
-            BANG,
-            STAR,
-            SLASH,
+            illegal,
+            eof,
+            ident,
+            __int,
+            __string,
+            assign,
 
-            LT,
-            GT,
-            EQ,
-            NE,
+            plus,
+            minus,
+            bang,
+            star,
+            slash,
 
-            COMMA,
-            SEMICOLON,
+            lt,
+            gt,
+            eq,
+            ne,
 
-            LPAREN,
-            RPAREN,
-            LBRACE,
-            RBRACE,
+            comma,
+            semicolon,
 
-            FUNC,
-            LET,
-            TRUE,
-            FALSE,
-            IF,
-            ELSE,
-            FOR,
-            RETURN
+            lparen,
+            rparen,
+            lbrace,
+            rbrace,
+
+            __func,
+            __let,
+            __true,
+            __false,
+            __if,
+            __else,
+            __for,
+            __while,
+            __ret,
+            __print,
         } type;
+
+        bool is_operator(token::type);
 
         class obj {
             private:
@@ -50,6 +56,9 @@ namespace source {
 
                 obj(token::type t, const string& s)
                     : __type__(t), __lit__(s) {}
+
+                obj(token::type t, int l)
+                    : __type__(t), __lit__(string(1,l)) {}
                 
                 obj(token::type t, char c)
                     : __type__(t), __lit__(string(1, c)) {}
@@ -87,12 +96,15 @@ namespace source {
                 void read_char();
                 string read_iden();
                 string read_num();
+                string read_str();
 
                 bool is_iden(char c);
                 void skip_spaces();
                 char peek_char();
 
                 token::obj next_token();
+
+                void throw_error(const string& mesg);
                 
         };
     }

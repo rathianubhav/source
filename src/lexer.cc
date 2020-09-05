@@ -1,10 +1,26 @@
 #include <source/lexer.hh>
+#include <releax/releax>
 
+using namespace releax;
 using namespace source;
 
+bool
+token::is_operator(token::type t)
+{
+    return t == token::plus  ||
+           t == token::minus ||
+           t == token::star  ||
+           t == token::slash;
+}
+
 map<string, token::type> __keywords__ {
-    {"func", token::FUNC},
-    {"let", token::LET},
+    {"func", token::__func},
+    {"let", token::__let},
+    {"if", token::__if},
+    {"else", token::__else},
+    {"for", token::__for},
+    {"print", token::__print},
+    {"while", token::__while},
 };
 
 token::type
@@ -13,19 +29,19 @@ token::lookup_iden(const string &iden)
     if (__keywords__.find(iden) != __keywords__.end())
         return __keywords__[iden];
     
-    return token::IDENT;
+    return token::ident;
 }
 
 string
 token::tok_to_str(token::type t)
 {
     switch (t) {
-        case token::ILLEGAL: return "illegal";
-        case token::TEOF: return "teof";
-        case token::IDENT: return "ident";
-        case token::INT: return "int";
-        case token::ASSIGN: return "assign";
-        case token::PLUS: return "plus";
+        case token::illegal: return "illegal";
+        case token::eof: return "teof";
+        case token::ident: return "ident";
+        case token::__int: return "int";
+        case token::assign: return "assign";
+        case token::plus: return "plus";
     }
 
     return "illegal";
@@ -42,8 +58,8 @@ lexer::obj::read_char()
     
     pos = read_pos;
     read_pos++;
-    
-    col = read_pos;
+
+    col = pos;
 }
 
 bool
@@ -66,9 +82,10 @@ lexer::obj::skip_spaces()
             line++;
             col = 0;
         }
+        read_char();
     }
         
-        read_char();
+        
 }
 
 char
@@ -85,6 +102,15 @@ lexer::obj::read_iden()
     int p = pos;
     while(is_iden(ch))  read_char();
     return input.substr(p, pos - p);
+}
+
+string
+lexer::obj::read_str()
+{
+    int p = pos;
+    read_char();
+    while(ch != '"') read_char();
+    return input.substr(p + 1, pos - (p + 1));
 }
 
 string
@@ -106,88 +132,99 @@ lexer::obj::next_token()
         case '=' :
             if (peek_char() == '=') {
                 read_char();
-                tok = token::obj(token::EQ, "==");
+                tok = token::obj(token::eq, "==");
             } else {
-                tok = token::obj(token::ASSIGN, ch);
+                tok = token::obj(token::assign, ch);
             }
             break;
 
         case '!':
             if (peek_char() == '=') {
                 read_char();
-                tok = token::obj(token::NE, "!=");
+                tok = token::obj(token::ne, "!=");
             } else {
-                tok = token::obj(token::BANG, ch);
+                tok = token::obj(token::bang, ch);
             }
         
         case ';':
-            tok = token::obj(token::SEMICOLON, ch);
+            tok = token::obj(token::semicolon, ch);
             break;
         
         case '(':
-            tok = token::obj(token::LPAREN, ch);
+            tok = token::obj(token::lparen, ch);
             break;
 
         case ')':
-            tok = token::obj(token::RPAREN, ch);
+            tok = token::obj(token::rparen, ch);
             break;
 
         case ',':
-            tok = token::obj(token::COMMA, ch);
+            tok = token::obj(token::comma, ch);
             break;
         
         case '+':
-            tok = token::obj(token::PLUS, ch);
+            tok = token::obj(token::plus, ch);
             break;
 
         case '-':
-            tok = token::obj(token::MINUS, ch);
+            tok = token::obj(token::minus, ch);
             break;
         
         case '*':
-            tok = token::obj(token::STAR, ch);
+            tok = token::obj(token::star, ch);
             break;
         
         case '/':
-            tok = token::obj(token::SLASH, ch);
+            tok = token::obj(token::slash, ch);
             break;
         
         case '<':
-            tok = token::obj(token::LT, ch);
+            tok = token::obj(token::lt, ch);
             break;
         
         case '>':
-            tok = token::obj(token::GT, ch);
+            tok = token::obj(token::gt, ch);
             break;
 
         case '{':
-            tok = token::obj(token::LBRACE, ch);
+            tok = token::obj(token::lbrace, ch);
             break;
 
         case '}':
-            tok = token::obj(token::RBRACE, ch);
+            tok = token::obj(token::rbrace, ch);
+            break;
+
+        case '"':
+            tok = token::obj(token::__string, read_str());
             break;
         
         case 0:
-            tok = token::obj(token::TEOF, "");
+            tok = token::obj(token::eof, "");
             break;
 
         default:
             if (is_iden(ch)) {
                 string lit = read_iden();
-                tok = token::obj(token::lookup_iden(lit), lit);
+                token::type type = token::lookup_iden(lit);
+                return token::obj(type, lit);
 
-                return tok;
             } else if (isdigit(ch)) {
-                tok = token::obj(token::INT, read_num());
-
-                return tok;
+                string num =  read_num();
+                return token::obj(token::__int, num);
             } else {
-                tok = token::obj(token::ILLEGAL, ch);
+                tok = token::obj(token::illegal, ch);
             }
     }
-        
+
+  
     read_char();
 
     return tok;       
+}
+
+
+void
+lexer::obj::throw_error(const string& mesg)
+{
+    cout << "Error: [" << line << ":" << col << "] - " << mesg << endl;
 }
