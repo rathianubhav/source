@@ -200,5 +200,23 @@ namespace source {
 
                 }
         };
+
+        class do_loop : public stmt {
+            private:
+                unique_ptr<expr> __expr;
+                unique_ptr<stmt> __stmt;
+            
+            public:
+                do_loop(unique_ptr<expr> e,unique_ptr<stmt> s)
+                    : __expr(move(e)), __stmt(move(s))
+                {}
+
+                void exec(context::obj& cc) {
+
+                    do {
+                        __stmt->exec(cc);
+                    } while(__expr->eval(cc).get_bool());
+                }
+        };
     }
 }
