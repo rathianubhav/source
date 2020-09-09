@@ -106,7 +106,11 @@ namespace source {
                 token::obj next_token();
 
                 void throw_error(const string& mesg);
+
+                static void __test__(const string& , vector<token::obj>);
                 
         };
     }
 }
+
+void test_lexer();

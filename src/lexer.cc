@@ -227,3 +227,26 @@ lexer::obj::throw_error(const string& mesg)
 {
     cout << "Error: [" << line << ":" << col << "] - " << mesg << endl;
 }
+
+void 
+lexer::obj::__test__(const std::string& __text, vector<token::obj> __tok_stream)
+{
+    lexer::obj __lexer(__text);
+
+    token::obj __cur_tok = __lexer.next_token();
+    int i = 0;
+    while(__cur_tok.get_type() != token::eof) {
+        if (i > __tok_stream.size()) {
+            throw runtime_error("Exceed max assumed token stream");
+        }
+
+        if (!((__cur_tok.get_lit() == __tok_stream[i].get_lit()) &&
+            (__cur_tok.get_type() == __tok_stream[i].get_type())))
+        {
+            cout << "Failed to match " << __cur_tok.get_type() << " != " << __tok_stream[i].get_type() << endl;
+            throw runtime_error("Failed to match tokens " + to_string(i));
+        }
+        i++;
+        __cur_tok = __lexer.next_token();
+    }
+}
