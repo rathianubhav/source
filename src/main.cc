@@ -10,7 +10,8 @@ int debug = 0;
 enum MODE {
     LEXER,
     LABEL,
-    FULL
+    FULL,
+    TEST_LEXER,
 };
 
 string
@@ -96,6 +97,7 @@ main(int ac, char** av)
         if (args[0] == '-') {
             if (args.substr(1, args.length() - 1) == "lexer") __mode__ = LEXER;
             else if (args.substr(1, args.length() - 1) == "label") __mode__ = LABEL;
+            else if (args.substr(1, args.length() - 1) == "test-lexer") __mode__ = TEST_LEXER;
             else 
                 throw std::runtime_error("Invalid argument");
         } else {
@@ -104,5 +106,11 @@ main(int ac, char** av)
         }
     }
 
-    start_engine(interactive_mode, __mode__);
+    if (__mode__ == TEST_LEXER) {
+
+        test_lexer();
+    } else {
+        start_engine(interactive_mode, __mode__);
+    }
+    
 }
