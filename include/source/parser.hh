@@ -23,6 +23,7 @@ namespace source {
                 unique_ptr<ast::stmt> parse_while_stmt();
                 unique_ptr<ast::stmt> parse_expr_stmt();
                 unique_ptr<ast::stmt> parse_assign_stmt();
+                unique_ptr<ast::stmt> parse_do_stmt();
 
 
                 unique_ptr<ast::expr> parse_expr();

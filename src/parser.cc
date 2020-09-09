@@ -267,6 +267,7 @@ unique_ptr<ast::expr>
 parser::obj::parse_expr()
 {
     if (token::is_operator(peektok.get_type()))
+        
         return parse_op_expr();
 
     switch (curtok.get_type()) {
@@ -361,4 +362,42 @@ parser::obj::parse_while_stmt()
 
     auto __wh = make_unique<ast::while_loop>(move(ex), move(s));
     return move(__wh);
+}
+
+//// do_stmt ::= 'do' '{'<stmt>'}' 'while' '(' <expr> ')'
+////         ::= 'do' <stmt> 'while' '(' <expr> ')'
+unique_ptr<ast::stmt>
+parser::obj::parse_do_stmt()
+{
+    //eat do
+    eat_token();
+
+    // '{' or <expr>
+    if (curtok.get_type()==token::lbrace)
+        eat_token();
+    
+    // <stmt>
+    auto s = parse_stmt();
+    eat_token();
+
+    // '}'
+    if (curtok.get_type() == token::rbrace)
+        eat_token();
+    
+    //eat while
+    eat_token();
+
+    // eat '('
+    eat_token();
+
+    // <expr>
+    auto ex = parse_expr();
+    eat_token();
+
+    // ')'
+    eat_token();
+
+    auto __dw = make_unique<ast::do_loop>(move(ex), move(s));
+    return move(__dw);  
+
 }
