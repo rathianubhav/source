@@ -43,6 +43,7 @@ namespace source {
             __while,
             __ret,
             __print,
+            __do,
         } type;
 
         bool is_operator(token::type);

@@ -19,6 +19,7 @@ map<string, token::type> __keywords__ {
     {"for", token::__for},
     {"print", token::__print},
     {"while", token::__while},
+    {"do", token::__do},
 };
 
 token::type
