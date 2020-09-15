@@ -27,6 +27,7 @@ namespace source {
 
             comma,
             semicolon,
+            colon,
 
             lparen,
             rparen,
@@ -44,6 +45,23 @@ namespace source {
             __ret,
             __print,
             __do,
+            __auto,
+            __break,
+            __case,
+            __char,
+
+            _const,
+
+            __continue,
+            __default,
+            __extern,
+            __goto,
+            __register,
+            __return,
+            __sizeof,
+            __static,
+            __switch,
+
         } type;
 
         bool is_operator(token::type);

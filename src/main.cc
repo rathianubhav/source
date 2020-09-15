@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 #include <source/parser.hh>
 #include <source/context.hh>
+#include <source/ver_info.hh>
 
 using namespace std;
 using namespace source;
@@ -12,6 +13,7 @@ enum MODE {
     LABEL,
     FULL,
     TEST_LEXER,
+    VER_INFO,
 };
 
 string
@@ -98,6 +100,7 @@ main(int ac, char** av)
             if (args.substr(1, args.length() - 1) == "lexer") __mode__ = LEXER;
             else if (args.substr(1, args.length() - 1) == "label") __mode__ = LABEL;
             else if (args.substr(1, args.length() - 1) == "test-lexer") __mode__ = TEST_LEXER;
+            else if (args.substr(1, args.length() - 1) == "ver") __mode__ = VER_INFO;
             else 
                 throw std::runtime_error("Invalid argument");
         } else {
@@ -109,6 +112,14 @@ main(int ac, char** av)
     if (__mode__ == TEST_LEXER) {
 
         test_lexer();
+    } else {
+        start_engine(interactive_mode, __mode__);
+    }
+
+    if (__mode__ == VER_INFO) {
+        
+        ver_info();
+
     } else {
         start_engine(interactive_mode, __mode__);
     }

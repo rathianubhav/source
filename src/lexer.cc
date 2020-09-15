@@ -20,6 +20,21 @@ map<string, token::type> __keywords__ {
     {"print", token::__print},
     {"while", token::__while},
     {"do", token::__do},
+    {"auto",token::__auto},
+    {"break",token::__break},
+    {"case",token::__case},
+    {"char",token::__char},
+    {"const",token::_const},
+    {"continue",token::__continue},
+    {"default",token::__default},
+    {"extern",token::__extern},
+    {"goto",token::__goto},
+    {"register", token::__register},
+    {"return",token::__return},
+    {"sizeof",token::__sizeof},
+    {"static",token::__static},
+    {"switch",token::__switch},
+
 };
 
 token::type
@@ -149,11 +164,15 @@ lexer::obj::next_token()
             tok = token::obj(token::semicolon, ch);
             break;
         
-        case '(':
+        case ':':
+            tok = token::obj(token::colon, ch);
+            break;
+
+        case '{':
             tok = token::obj(token::lparen, ch);
             break;
 
-        case ')':
+        case '}':
             tok = token::obj(token::rparen, ch);
             break;
 
@@ -185,11 +204,11 @@ lexer::obj::next_token()
             tok = token::obj(token::gt, ch);
             break;
 
-        case '{':
+        case '(':
             tok = token::obj(token::lbrace, ch);
             break;
 
-        case '}':
+        case ')':
             tok = token::obj(token::rbrace, ch);
             break;
 

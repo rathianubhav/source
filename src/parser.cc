@@ -1,4 +1,5 @@
 #include <source/parser.hh>
+#include <memory>
 
 using namespace source;
 
