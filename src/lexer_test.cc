@@ -13,7 +13,7 @@ test_lexer()
                 token::obj(token::ident, "int"),
                 token::obj(token::ident, "x"),
                 token::obj(token::assign, "="),
-                token::obj(token::__int, "5"),
+                token::obj(token::num, "5"),
                 token::obj(token::semicolon, ";")
             }
         );
@@ -30,7 +30,7 @@ test_lexer()
             vector<token::obj> {
                 token::obj(token::__print, "print"),
                 token::obj(token::ident, "x"),
-                token::obj(token::__int, "5"),
+                token::obj(token::num, "5"),
                 token::obj(token::semicolon, ";")
             }
         );
@@ -47,7 +47,7 @@ test_lexer()
                 token::obj(token::__auto, "auto"),
                 token::obj(token::ident, "x"),
                 token::obj(token::assign, "="),
-                token::obj(token::__int, "5"),
+                token::obj(token::num, "5"),
                 token::obj(token::semicolon, ";")
             }
         );
@@ -80,7 +80,7 @@ test_lexer()
                 token::obj(token::colon,":"),
                 token::obj(token::ident, "x"),
                 token::obj(token::assign, "="),
-                token::obj(token::__int, "5"),
+                token::obj(token::num, "5"),
                 token::obj(token::semicolon, ";")
             }
         );
@@ -145,7 +145,7 @@ test_lexer()
                 token::obj(token::colon,":"),
                 token::obj(token::ident, "x"),
                 token::obj(token::assign, "="),
-                token::obj(token::__int, "5"),
+                token::obj(token::num, "5"),
                 token::obj(token::semicolon, ";")
             }
         );
@@ -196,7 +196,7 @@ test_lexer()
                 token::obj(token::ident, "int"),
                 token::obj(token::ident, "x"),
                 token::obj(token::assign, "="),
-                token::obj(token::__int, "5"),
+                token::obj(token::num, "5"),
                 token::obj(token::semicolon, ";")
             }
         );
@@ -266,7 +266,7 @@ test_lexer()
                 token::obj(token::rbrace, ")"),
                 token::obj(token::lparen, "{"),
                 token::obj(token::__case,"case"),
-                token::obj(token::__int,"14"),
+                token::obj(token::num,"14"),
                 token::obj(token::colon,":"),
                 token::obj(token::__print,"print"),
                 token::obj(token::lbrace,"("),
@@ -276,7 +276,7 @@ test_lexer()
                 token::obj(token::__break,"break"),
                 token::obj(token::semicolon, ";"),
                 token::obj(token::__case,"case"),
-                token::obj(token::__int,"21"),
+                token::obj(token::num,"21"),
                 token::obj(token::colon,":"),
                 token::obj(token::__print,"print"),
                 token::obj(token::lbrace,"("),
@@ -298,6 +298,21 @@ test_lexer()
         io::success("Testing switch");
     } catch (std::runtime_error e) {
         io::error("Testing switch");
+        io::info(e.what());
+    }
+
+    try {
+        lexer::obj::__test__(
+            "5123 598.64 5.2.6.4",
+            vector<token::obj> {
+                token::obj(token::num, "5123"),
+                token::obj(token::decimal, "598.64"),
+                token::obj(token::str, "5.2.6.4")
+            }
+        );
+        io::success("Testing Number type");
+    } catch (std::runtime_error e) {
+        io::error("Testing Number type");
         io::info(e.what());
     }
 }
