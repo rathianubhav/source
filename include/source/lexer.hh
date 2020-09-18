@@ -10,9 +10,11 @@ namespace source {
             illegal,
             eof,
             ident,
-            __int,
-            __string,
             assign,
+
+            num,
+            decimal,
+            str,
 
             plus,
             minus,
@@ -49,6 +51,9 @@ namespace source {
             __break,
             __case,
             __char,
+            __int,
+            __float,
+            __string,
 
             _const,
 

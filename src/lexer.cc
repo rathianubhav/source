@@ -131,7 +131,7 @@ string
 lexer::obj::read_num()
 {
     int p = pos;
-    while(isdigit(ch))  read_char();
+    while(isdigit(ch) || ch == '.')  read_char();
     return input.substr(p, pos - p);
 }
 
@@ -228,7 +228,18 @@ lexer::obj::next_token()
 
             } else if (isdigit(ch)) {
                 string num =  read_num();
-                return token::obj(token::__int, num);
+                int dot_count = 0;
+                for(char n : num)
+                    if (n == '.')
+                        dot_count++;
+                
+                token::type t;
+                switch(dot_count) {
+                    case 0: t = token::num; break;
+                    case 1: t = token::decimal; break;
+                    default: t = token::str; break;
+                }
+                return token::obj(t, num);
             } else {
                 tok = token::obj(token::illegal, ch);
             }
