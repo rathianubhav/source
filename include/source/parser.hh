@@ -16,23 +16,6 @@ namespace source {
 
                 void expect(token::type t);
 
-                unique_ptr<ast::stmt> parse_stmt();
-                unique_ptr<ast::stmt> parse_let();
-                unique_ptr<ast::stmt> parse_print_stmt();
-                unique_ptr<ast::stmt> parse_if_stmt();
-                unique_ptr<ast::stmt> parse_while_stmt();
-                unique_ptr<ast::stmt> parse_expr_stmt();
-                unique_ptr<ast::stmt> parse_assign_stmt();
-                unique_ptr<ast::stmt> parse_do_stmt();
-
-
-                unique_ptr<ast::expr> parse_expr();
-                unique_ptr<ast::expr> parse_op_expr();
-                unique_ptr<ast::expr> parse_ident();
-                unique_ptr<ast::expr> parse_num();
-                unique_ptr<ast::expr> parse_str();
-
-                unique_ptr<ast::expr> parse_func();
             public:
                 obj(lexer::obj& l, context::obj& cc)
                     : __lexer__(l), __context__(cc)

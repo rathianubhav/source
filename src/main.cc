@@ -109,19 +109,24 @@ main(int ac, char** av)
         }
     }
 
-    if (__mode__ == TEST_LEXER) {
+    try {
 
-        test_lexer();
-    } else {
-        start_engine(interactive_mode, __mode__);
-    }
+        if (__mode__ == TEST_LEXER) {
 
-    if (__mode__ == VER_INFO) {
-        
-        ver_info();
+            test_lexer();
+        } else {
+            start_engine(interactive_mode, __mode__);
+        }
 
-    } else {
-        start_engine(interactive_mode, __mode__);
+        if (__mode__ == VER_INFO) {
+            
+            ver_info();
+
+        } else {
+            start_engine(interactive_mode, __mode__);
+        }
+    } catch(std::runtime_error e) {
+        io::error(e.what());
     }
     
 }
