@@ -1,84 +1,32 @@
-program 
-: root_declaration
+program ::= {root_decl}+
 
-root_declaration
-: external_declaration
-| root_declaration external_declaration
-;
+root_decl ::= var_decl | func_decl
 
-external_declaration
-: function_declaration
-| declaration
-;
+var_decl ::= TYPE {'*'}* IDEN ';'
 
-function_declaration
-: declarator declaration_list compound_statment
-| declarator compound_statment
-;
+func_decl ::= TYPE {'*'}* IDEN '(' parm_decl ')' '{' body_decl '}'
 
-declaration_list
-: declaration
-| declaration_list declaration
-;
+parm_decl ::= TYPE {'*'}* IDEN {',' parm_decl }*
 
+body_decl ::= {var_decl}, {stmt}
 
-declaration
-: declaration_specifiers ';'
-| declaration_specifiers init_declarator_list ';'
-;
+stmt ::= if_stmt 
+     |   while_stmt 
+     |   '{' stmt '}' 
+     |   'return' expr ';' 
+     |   expr ';'
+     
+if_stmt ::= 'if' '(' expr ')' stmt [ 'else' stmt ]
 
-declaration_specifiers
-: type_specifier
-| type_specifier declaration_specifiers
-;
+while_stmt ::= 'while' '(' expr ')' stmt
 
-type_specifier:
-: INT
-| CHAR
-;
-
-init_declarator_list
-: init_declarator
-| init_declarator_list ',' init_declarator
-;
-
-init_declarator
-: declarator
-| declarator '=' initializer
-;
-
-declarator
-: direct_declarator
-;
-
-
-direct_declarator
-: IDENTIFIER
-| '(' declarator ')'
-;
-
-initializer
-: assign_expr
-;
-
-assign_expr
-| unary_expr assign_oper assign_expr
-;
-
-assign_oper
-: '='
-;
-
-unary_expr
-: postfix_expr
-;
-
-postfix_expr
-: primary_expr
-;
-
-primary_expr
-: IDENTIFIER
-| CONSTANT
-| STRING_LITERAL
-;
+expr ::= expr '+' term
+     |   expr '-' term
+     |   term
+     
+term ::= term '*' factor
+     |   term '/' factor
+     |   factor
+     
+factor ::= ( expr )
+       |   NUM
