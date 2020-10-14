@@ -20,6 +20,27 @@ if_stmt ::= 'if' '(' expr ')' stmt [ 'else' stmt ]
 
 while_stmt ::= 'while' '(' expr ')' stmt
 
+--------------------------------------------------------------
+
+expr ::= extra expr_tail
+
+expr_tail ::= '+' term expr_tail
+           |  '-' term expr_tail
+           |
+
+extra ::= factor extra_tail
+
+term ::= factor term_tail
+
+term_tail ::= '*' factor term_tail
+          |   '/' factor term_tail
+          |
+
+factor ::= '(' expr ')'
+          | NUMBER
+ 
+----------------------------------------------------------
+
 expr ::= expr '+' term
      |   expr '-' term
      |   term

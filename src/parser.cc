@@ -19,7 +19,7 @@ parser::obj::expect(token::type t)
     }
 }
 
-// prog ::= { <stmt> }
+// prog ::= [ <root_declaration> ]
 unique_ptr<ast::program> 
 parser::obj::parse()
 {
@@ -28,15 +28,42 @@ parser::obj::parse()
     // {
     while (curtok.get_type() != token::eof) {
 
-        // eat <stmt>
-        auto s = parse_stmt();
-        if (s != nullptr) {
-            prog->stmts.push_back(move(s));
-        }
-        eat_token();
     }
 
     // }
 
     return move(prog);
+}
+
+
+// expr ::= <term> <expr_tail>
+unique_ptr<ast::expr>
+parser::obj::parse_expr()
+{
+    // eat <term>
+    auto lval = parse_term();
+
+    // eat <expr_tail>
+    return parse_expr_tail(move(lval));
+}
+
+// term ::= <factor> <term_tail>
+unique_ptr<ast::expr>
+parser::obj::parse_term()
+{
+    // eat <factor>
+    auto lval = parse_factor();
+
+    // eat <term_tail>
+    return parse_term_tail(move(lval));
+}
+
+// expr_tail ::= '+' <term> <expr_tail>
+//            |  '-' <term> <expr_tail>
+//            |  empty
+unique_ptr<ast::expr>
+parser::obj::parse_expr_tail(unique_ptr<ast::expr> lval)
+{
+    // eat '+'
+
 }

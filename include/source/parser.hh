@@ -16,6 +16,16 @@ namespace source {
 
                 void expect(token::type t);
 
+                //unique_ptr<ast::stmt> parse_root_declaration();
+
+                unique_ptr<ast::expr> parse_expr();
+                unique_ptr<ast::expr> parse_expr_tail(unique_ptr<ast::expr>);
+
+                unique_ptr<ast::expr> parse_term();
+                unique_ptr<ast::expr> parse_term_tail(unique_ptr<ast::expr>);
+
+                unique_ptr<ast::expr> parse_factor();                
+                
             public:
                 obj(lexer::obj& l, context::obj& cc)
                     : __lexer__(l), __context__(cc)
