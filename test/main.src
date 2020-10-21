@@ -1,7 +1,0 @@
-let x = 5;
-
-let x = func() {
-    print(Hellox);
-}
-
-x();
