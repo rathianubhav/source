@@ -20,14 +20,15 @@ parser::obj::expect(token::type t)
 }
 
 // prog ::= [ <root_declaration> ]
-unique_ptr<ast::program> 
+unique_ptr<ast::program>
 parser::obj::parse()
 {
     auto prog = make_unique<ast::program>();
 
     // {
     while (curtok.get_type() != token::eof) {
-
+        auto s = parse_expr_stmt();
+        prog->stmts.push_back(move(s));
     }
 
     // }
@@ -35,6 +36,20 @@ parser::obj::parse()
     return move(prog);
 }
 
+
+// expr_stmt ::= <expr> ';'
+unique_ptr<ast::stmt>
+parser::obj::parse_expr_stmt()
+{
+    // eat <expr>
+    auto e = parse_expr();
+
+    // eat ';'
+    expect(token::semicolon);
+    eat_token();
+
+    return make_unique<ast::expr_stmt>(move(e));
+}
 
 // expr ::= <term> <expr_tail>
 unique_ptr<ast::expr>
@@ -64,6 +79,68 @@ parser::obj::parse_term()
 unique_ptr<ast::expr>
 parser::obj::parse_expr_tail(unique_ptr<ast::expr> lval)
 {
-    // eat '+'
 
+    // eat '+' | '-'
+    if (token::is_operator(curtok.get_type())) {
+        if (curtok.get_lit() == "+") {
+            eat_token();
+            auto rval = parse_term();
+            auto val = make_unique<ast::constant>((lval->get() + rval.get()->get()));
+            return parse_expr_tail(move(val));
+        } else if (curtok.get_lit() == "-") {
+            eat_token();
+            auto rval = parse_term();
+            auto val = make_unique<ast::constant>((lval->get() - rval.get()->get()));
+            return parse_expr_tail(move(val));
+        }
+    }
+
+    return move(lval);
+}
+
+// term_tail ::= '*' <factor> <term_tail>
+//           ::= '/' <factor> <term_tail>
+//           ::= <empty>
+unique_ptr<ast::expr>
+parser::obj::parse_term_tail(unique_ptr<ast::expr> lval)
+{
+    // eat '+' | '-'
+    if (token::is_operator(curtok.get_type())) {
+        if (curtok.get_lit() == "*") {
+            eat_token();
+            auto rval = parse_factor();
+            auto val = make_unique<ast::constant>((lval->get() * rval.get()->get()));
+            return parse_term_tail(move(val));
+        } else if (curtok.get_lit() == "-") {
+            eat_token();
+            auto rval = parse_factor();
+            auto val = make_unique<ast::constant>((lval->get() / rval.get()->get()));
+            return parse_term_tail(move(val));
+        }
+    }
+
+    return move(lval);
+}
+
+// factor ::= '(' <expr> ')'
+//        ::= NUM
+unique_ptr<ast::expr>
+parser::obj::parse_factor()
+{
+    int val = 0;
+    if (curtok.get_lit() == "(")
+    {
+        // eat '('
+        eat_token();
+
+        // eat <expr>
+        val = parse_expr()->get().int_val();
+
+        // eat ')'
+        eat_token();
+    } else {
+        val = atoi(curtok.get_lit().c_str());
+        eat_token();
+    }
+    return make_unique<ast::num>(val);
 }
