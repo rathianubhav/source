@@ -116,4 +116,11 @@ namespace io {
 
 }
 
+
+#ifdef DEBUG
+    #define debug(...) io::log(__VA_ARGS__)
+#else
+    #define debug(...)
+#endif
+
 #endif

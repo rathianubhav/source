@@ -24,8 +24,10 @@ namespace source {
                 unique_ptr<ast::expr> parse_term();
                 unique_ptr<ast::expr> parse_term_tail(unique_ptr<ast::expr>);
 
-                unique_ptr<ast::expr> parse_factor();                
-                
+                unique_ptr<ast::expr> parse_factor();
+
+                unique_ptr<ast::stmt> parse_expr_stmt();
+
             public:
                 obj(lexer::obj& l, context::obj& cc)
                     : __lexer__(l), __context__(cc)
