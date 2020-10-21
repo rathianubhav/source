@@ -87,6 +87,7 @@ namespace source {
 
                 friend ostream& operator<<(ostream& os, const obj&);
         };
+        ostream& operator<<(ostream&, const obj&);
     }
 
 }
