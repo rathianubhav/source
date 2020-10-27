@@ -32,3 +32,15 @@ st::obj::lookup(const string &s)
     
     return __table__[s];
 }
+
+void
+st::obj::print()
+{
+    cout << "----------------------------" << endl;
+    cout << " Variable\t|\tValue     " << endl;
+    for(auto a : __table__)
+    {
+        cout << " " << a.first << "\t\t|\t\t" << a.second << endl;
+    }
+    cout << "----------------------------" << endl;
+}

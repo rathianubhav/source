@@ -66,6 +66,7 @@ namespace source {
             __sizeof,
             __static,
             __switch,
+            __debug,
 
         } type;
 
