@@ -7,7 +7,7 @@ using namespace std;
 namespace source {
     namespace value {
         enum type {
-            num_t,
+            int_t,
             null,
         };
 
@@ -23,7 +23,7 @@ namespace source {
             public:
                 obj() : type(value::null) {}
 
-                obj(int v) : type(value::num_t)
+                obj(int v) : type(value::int_t)
                     { data.int_val = v;}
 
                 int int_val() const {return data.int_val;}
@@ -34,7 +34,7 @@ namespace source {
                     if (type == other.type)
                     {
                         switch (type) {
-                            case value::num_t:
+                            case value::int_t:
                                 return obj(data.int_val + other.data.int_val);
                         }
                         throw std::runtime_error("invalid data");
@@ -48,7 +48,7 @@ namespace source {
                     if (type == other.type)
                     {
                         switch (type) {
-                            case value::num_t:
+                            case value::int_t:
                                 return obj(data.int_val - other.data.int_val);
                         }
                         throw std::runtime_error("invalid data");
@@ -62,7 +62,7 @@ namespace source {
                     if (type == other.type)
                     {
                         switch (type) {
-                            case value::num_t:
+                            case value::int_t:
                                 return obj(data.int_val * other.data.int_val);
                         }
                         throw std::runtime_error("invalid data");
@@ -76,7 +76,7 @@ namespace source {
                     if (type == other.type)
                     {
                         switch (type) {
-                            case value::num_t:
+                            case value::int_t:
                                 return obj(data.int_val / other.data.int_val);
                         }
                         throw std::runtime_error("invalid data");
