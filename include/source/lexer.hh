@@ -12,10 +12,6 @@ namespace source {
             ident,
             assign,
 
-            num,
-            decimal,
-            str,
-
             plus,
             minus,
             bang,

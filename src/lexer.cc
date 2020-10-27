@@ -235,9 +235,9 @@ lexer::obj::next_token()
                 
                 token::type t;
                 switch(dot_count) {
-                    case 0: t = token::num; break;
-                    case 1: t = token::decimal; break;
-                    default: t = token::str; break;
+                    case 0: t = token::__int; break;
+                    case 1: t = token::__float; break;
+                    default: t = token::__char; break;
                 }
                 return token::obj(t, num);
             } else {
