@@ -127,6 +127,8 @@ main(int ac, char** av)
         }
     } catch(std::runtime_error e) {
         io::error(e.what());
+    } catch (std::bad_alloc e) {
+        io::error(e.what());
     }
     
 }

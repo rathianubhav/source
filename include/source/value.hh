@@ -8,6 +8,7 @@ namespace source {
     namespace value {
         enum type {
             int_t,
+            string_t,
             null,
         };
 
@@ -17,17 +18,24 @@ namespace source {
                 {
                     int int_val;
                 } data;
-
+                std::string s_val;
                 value::type type;
 
             public:
                 obj() : type(value::null) {}
 
+                obj(value::type t)
+                    : type(t) {}
+
                 obj(int v) : type(value::int_t)
                     { data.int_val = v;}
 
-                int int_val() const {return data.int_val;}
+                obj(std::string v)
+                    : type(value::string_t)
+                    { s_val = v;}
 
+                int int_val() const {return data.int_val;}
+                std::string str_val() const {return s_val;}
                 value::type get_type() const {return type;}
                 obj operator+(const obj& other)
                 {

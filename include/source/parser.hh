@@ -16,8 +16,10 @@ namespace source {
 
                 void expect(token::type t);
 
-                //unique_ptr<ast::stmt> parse_root_declaration();
+                unique_ptr<ast::stmt> parse_root_declaration();
 
+                unique_ptr<ast::stmt> parse_debug_stmt();
+                
                 unique_ptr<ast::expr> parse_expr();
                 unique_ptr<ast::expr> parse_expr_tail(unique_ptr<ast::expr>);
 

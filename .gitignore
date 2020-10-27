@@ -1,4 +1,8 @@
 build/
+<<<<<<< HEAD
+.vscode/
+=======
 source.exe
 a.exe
 a.out
+>>>>>>> minor
