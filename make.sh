@@ -1,9 +1,11 @@
 #!/bin/sh
 
-rm ./source
-echo "compiling source"
-g++ src/*.cc -I include -o source -std=c++17 -DDEBUG
+rm ./build/source
+echo "compiling libsrc"
+g++ src/libsrc/*.cc -I include -fPIC -shared -o build/libsrc -std=c++17
 
+echo "compiling source"
+g++ src/source/*.cc -I include -o build/source -std=c++17 -Lbuild/ -lsrc
 
 echo "Compilation done"
-./source
+LD_LIBRARY_PATH=./build/ ./build/source
