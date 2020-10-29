@@ -8,12 +8,17 @@ using namespace source;
 
 int debug = 0;
 
+enum DEBUG {
+    DEBUG_LEXER,
+    DEBUG_AST,
+    DEBUG_PARSER,
+};
+
 enum MODE {
+    INTERPRETER,
     LEXER,
     LABEL,
-    FULL,
-    TEST_LEXER,
-    VER_INFO,
+    NONE,
 };
 
 string
@@ -30,105 +35,127 @@ readfile(const string& file)
 }
 
 void
-start_engine(bool interactive, MODE m = FULL)
+source_engine(int mode, string file)
 {
     context::obj cc;
-    string input;
-
-    string __mode_mesg = "";
-    switch (m) {
-        case LEXER:
-            __mode_mesg = "(Lexer analysis)";
-            break;
-        
-        case LABEL:
-            __mode_mesg = "(Label analysis)";
-            break;
-    }
-
-    if (interactive) {
-
-        do {
+    do {
+        string input;
+        if (file.length() == 0) {
             cout << ">> ";
-            getline(std::cin, input);
-            lexer::obj __lexer__(input);
+            getline(cin, input);
+        }
+        else input = readfile(file);
 
-            if (m == LEXER) {
-                auto _t = __lexer__.next_token();
-                while(_t.get_type() != token::eof) {
-                    cout << "[" << _t.get_lit() << ":" << _t.get_type() << "]" << endl;
-                    _t = __lexer__.next_token();
+        lexer::obj l(input);
+        if (mode == LEXER)
+        {
+            auto tkn = l.next_token();
+            while(tkn.get_type() != token::eof)
+                io::println("[", tkn.get_lit(), "]");
+        }
+        else
+        {
+            parser::obj p(l, cc);
+            auto prog = p.parse();
+
+            if (mode == LABEL)
+            {
+                for(auto i = prog->stmts.begin();
+                         i != prog->stmts.end();
+                         i++)
+                {
+                    i->get()->label();
                 }
             } else {
-                parser::obj __parser__(__lexer__,cc);
-                auto __prog__ = __parser__.parse();
-                if (m == LABEL) {
-                    for(auto i = __prog__->stmts.begin();
-                         i != __prog__->stmts.end();
+                for(auto i = prog->stmts.begin();
+                         i != prog->stmts.end();
                          i++)
-                    {
-                        cout << i->get()->label() << endl;
-                    }
-                } else {
-                    for(auto i = __prog__->stmts.begin();
-                         i != __prog__->stmts.end();
-                         i++)
-                    {
-                        i->get()->exec(cc);
-                    }
+                {
+                    i->get()->exec(cc);
                 }
-                
             }
-        } while (true);
-    }
+        }
+
+        if (file.length() != 0)
+        {
+            mode = NONE;
+        }
+    } while (mode == INTERPRETER);
 }
 
+class cli {
+    private:
+        int ac;
+        char** av;
+        vector<string> args, flags;
+        map<string, string> values;
 
+    public:
+        cli(int ac, char** av)
+            : ac(ac), av(av)
+        {
+            string arg;
+            for(int i = 1; i < ac; i++)
+            {
+                arg = av[i];
+                if (av[i][0] == '-')
+                {
+                    arg = arg.substr(1, arg.length() - 1);
+                    if (arg[1] == '-')
+                        arg = arg.substr(1, arg.length() - 1);
+                    
+                    flags.push_back(arg);
+                }
 
+                else
+                {
+                    size_t rdx = arg.find_first_of('=');
+                    if (rdx == string::npos)
+                    {
+                        args.push_back(arg);
+                    }
 
+                    else
+                    {
+                        string var = arg.substr(0, rdx);
+                        string val = arg.substr(rdx + 1, arg.length() - (rdx + 1));
+                        values.insert(make_pair(var, val));
+                    }
+                }
+            }
+        }
+
+        void run()
+        {
+            for(auto a : values)
+            {
+                if (a.first == "debug")
+                {
+                    if (a.second == "lexer")    debug |= DEBUG_LEXER;
+                    else if (a.second == "parser") debug |= DEBUG_PARSER;
+                    else if (a.second == "ast") debug |= DEBUG_AST;
+                }
+            }
+            int MODE = INTERPRETER;
+            string file;
+            if (args.size() != 0)
+            {
+                if (args[0] == "lex")   MODE = LEXER;
+                else if (args[0] == "label") MODE = LABEL;
+                else {
+                    file = args[0];
+                }
+            }
+
+            source_engine(MODE, file);
+        }
+};
 
 int
 main(int ac, char** av)
 {
-    bool interactive_mode = (ac <= 1);
-    MODE __mode__ = FULL;
-    std::string __file_name__;
 
-    for(int i = 1; i < ac; i++) {
-        std::string args(av[i]);
-        if (args[0] == '-') {
-            if (args.substr(1, args.length() - 1) == "lexer") __mode__ = LEXER;
-            else if (args.substr(1, args.length() - 1) == "label") __mode__ = LABEL;
-            else if (args.substr(1, args.length() - 1) == "test-lexer") __mode__ = TEST_LEXER;
-            else if (args.substr(1, args.length() - 1) == "ver") __mode__ = VER_INFO;
-            else 
-                throw std::runtime_error("Invalid argument");
-        } else {
-            __file_name__ = args;
-            interactive_mode = false;
-        }
-    }
+    cli source_cli(ac, av);
 
-    try {
-
-        if (__mode__ == TEST_LEXER) {
-
-            test_lexer();
-        } else {
-            start_engine(interactive_mode, __mode__);
-        }
-
-        if (__mode__ == VER_INFO) {
-            
-            ver_info();
-
-        } else {
-            start_engine(interactive_mode, __mode__);
-        }
-    } catch(std::runtime_error e) {
-        io::error(e.what());
-    } catch (std::bad_alloc e) {
-        io::error(e.what());
-    }
-    
+    source_cli.run();    
 }
