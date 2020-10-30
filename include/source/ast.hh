@@ -103,6 +103,8 @@ namespace source {
                 virtual int exec(context::obj& cc)
                 {
                     io::println(__expr->eval(cc));
+                    // return statement missing
+                    return 0;
                 }
         };
 

@@ -6,6 +6,10 @@ using namespace source;
 
 std::map<std::string,value::type> data_types = {
     {"int",value::int_t},
+    {"short",value::short_t},
+    {"long",value::long_t},
+    {"float",value::float_t},
+    {"double",value::double_t}
 };
 
 
@@ -215,7 +219,7 @@ parser::obj::parse_factor()
     {
         // eat '('
         eat_token();
-
+        parse_expr()->get().get_type();
         // eat <expr>
         val = parse_expr()->get().int_val();
 
