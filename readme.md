@@ -143,6 +143,7 @@ Distributed under the GPL3 License. See `license` for more information.
 <!-- CONTACT -->
 ## Contact
 Manjeet Singh - [@releaxos](https://twitter.com/releaxos) - itsmanjeet@releax.in
+Anubhav Rathi - anubhavrathi1999@gmail.com
 
 [Join](https://discord.gg/TXTxDTYcdg) our discord server for any query
 
