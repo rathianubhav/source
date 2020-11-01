@@ -12,10 +12,6 @@ namespace source {
             ident,
             assign,
 
-            num,
-            decimal,
-            str,
-
             plus,
             minus,
             bang,
@@ -66,6 +62,7 @@ namespace source {
             __sizeof,
             __static,
             __switch,
+            __debug,
 
         } type;
 

@@ -3,6 +3,21 @@
 
 using namespace source;
 
+
+std::map<std::string,value::type> data_types = {
+    {"int",value::int_t},
+    {"short",value::short_t},
+    {"long",value::long_t},
+    {"float",value::float_t},
+    {"double",value::double_t}
+};
+
+
+bool is_datatype(token::obj &t)
+{
+    return data_types.find(t.get_lit()) != data_types.end();
+}
+
 void
 parser::obj::eat_token()
 {
@@ -27,7 +42,17 @@ parser::obj::parse()
 
     // {
     while (curtok.get_type() != token::eof) {
-        auto s = parse_expr_stmt();
+        unique_ptr<ast::stmt> s;
+
+        debug("current token: ",curtok.get_lit());
+        
+        if (is_datatype(curtok)){
+            io::info("parsing root decl");
+            s = parse_root_declaration();
+        }   
+        else if (curtok.get_type() == token::__debug)
+            s = parse_debug_stmt();
+        else                        s = parse_expr_stmt();
         prog->stmts.push_back(move(s));
     }
 
@@ -37,10 +62,71 @@ parser::obj::parse()
 }
 
 
+// debug_stmt   ::= 'debug' '<?>' 
+unique_ptr<ast::stmt>
+parser::obj::parse_debug_stmt()
+{
+    debug("parsing debug statment");
+    // eat '#debug'
+    eat_token();
+    int s = -1;
+    if (curtok.get_lit() == "st")
+        s = 0;
+
+    return make_unique<ast::debug_stmt>(s);
+}
+
+// root_delaration  ::= var_decl | func_decl
+// var_decl         ::= TYPE {'*'}* IDEN ';'
+//                  ::= TYPE {'*'}* IDEN  '=' <expr> ';'
+// func_decl        ::= TYPE {'*'}* IDEN '(' param_decl ')' '{' body_decl '}'
+unique_ptr<ast::stmt>
+parser::obj::parse_root_declaration()
+{
+    debug("parsing root declaration statment");
+    // eat TYPE
+    auto type = data_types[curtok.get_lit()];
+    eat_token();
+
+    // {'*'}*
+    int ptr = -1;
+    while(curtok.get_type() == token::star)
+    {
+        eat_token();
+        ptr++;
+    }
+
+    // eat IDEN
+    expect(token::ident);
+    auto iden = std::make_unique<ast::identifier>(curtok.get_lit());
+    eat_token();
+
+    if (curtok.get_type() == token::semicolon)
+    {
+        // eat ';'
+        eat_token();
+        return make_unique<ast::var_decl>(type, move(iden), ptr);
+    }
+
+    else if (curtok.get_type() == token::assign)
+    {
+        // eat '='
+        eat_token();
+        auto e = parse_expr();
+
+        // eat ';'
+        eat_token();
+        return make_unique<ast::var_decl>(type, move(iden), ptr, move(e));
+    } 
+    return nullptr;
+    
+}
+
 // expr_stmt ::= <expr> ';'
 unique_ptr<ast::stmt>
 parser::obj::parse_expr_stmt()
 {
+    debug("parsing expr_stmt");
     // eat <expr>
     auto e = parse_expr();
 
@@ -111,7 +197,7 @@ parser::obj::parse_term_tail(unique_ptr<ast::expr> lval)
             auto rval = parse_factor();
             auto val = make_unique<ast::constant>((lval->get() * rval.get()->get()));
             return parse_term_tail(move(val));
-        } else if (curtok.get_lit() == "-") {
+        } else if (curtok.get_lit() == "/") {
             eat_token();
             auto rval = parse_factor();
             auto val = make_unique<ast::constant>((lval->get() / rval.get()->get()));
@@ -124,6 +210,7 @@ parser::obj::parse_term_tail(unique_ptr<ast::expr> lval)
 
 // factor ::= '(' <expr> ')'
 //        ::= NUM
+//        ::= IDEN
 unique_ptr<ast::expr>
 parser::obj::parse_factor()
 {
@@ -132,7 +219,7 @@ parser::obj::parse_factor()
     {
         // eat '('
         eat_token();
-
+        parse_expr()->get().get_type();
         // eat <expr>
         val = parse_expr()->get().int_val();
 

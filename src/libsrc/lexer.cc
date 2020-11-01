@@ -34,6 +34,7 @@ map<string, token::type> __keywords__ {
     {"sizeof",token::__sizeof},
     {"static",token::__static},
     {"switch",token::__switch},
+    {"debug", token::__debug},
 
 };
 
@@ -50,12 +51,12 @@ string
 token::tok_to_str(token::type t)
 {
     switch (t) {
-        case token::illegal: return "illegal";
-        case token::eof: return "teof";
-        case token::ident: return "ident";
-        case token::__int: return "int";
-        case token::assign: return "assign";
-        case token::plus: return "plus";
+        case token::illegal :    return "illegal";
+        case token::eof     :    return "teof";
+        case token::ident   :    return "ident";
+        case token::__int   :    return "int";
+        case token::assign  :    return "assign";
+        case token::plus    :    return "plus";
     }
 
     return "illegal";
@@ -235,9 +236,9 @@ lexer::obj::next_token()
                 
                 token::type t;
                 switch(dot_count) {
-                    case 0: t = token::num; break;
-                    case 1: t = token::decimal; break;
-                    default: t = token::str; break;
+                    case 0: t = token::__int; break;
+                    case 1: t = token::__float; break;
+                    default: t = token::__char; break;
                 }
                 return token::obj(t, num);
             } else {
@@ -279,4 +280,4 @@ lexer::obj::__test__(const std::string& __text, vector<token::obj> __tok_stream)
         i++;
         __cur_tok = __lexer.next_token();
     }
-}
+}  

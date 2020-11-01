@@ -14,6 +14,7 @@ namespace source {
                 void insert(const string& s, value::obj val);
                 void update(const string& s, value::obj val);
                 value::obj lookup(const string &s);
+                void print();
         };
     }
 }
