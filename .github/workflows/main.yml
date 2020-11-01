@@ -1,0 +1,30 @@
+name: test build
+on:
+  push:
+    paths:
+      - "**.cc"
+      - "**.hh"
+  pull_request:
+    paths:
+      - "**.hh"
+      - "**.cc"
+jobs:
+  linux:
+    
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+      - run: pip install meson ninja
+      - run: meson setup build
+        env:
+          CXX: g++
+      - run: meson build .
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: Build Failed 
+          path: build/meson-logs/testlog.txt  
+   
