@@ -2,9 +2,19 @@ name: meson build
 on: push
 jobs:
   meson-build:
-    name: Test Build
     runs-on: ubuntu-latest
-    
+    container: mesonbuild/eoan:latest
     steps:
-      - name: Checkout codes
-        uses: BSFishy/meson-build@v1.0.1
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+      - run: pip install meson ninja
+      - run: meson build .
+        env:
+          CXX: g++
+      - uses: actions/upload-aritfact@v1
+        if: failure()
+        with:
+          name: meson_build_log
+          path: build/meson-logs/build.txt  
