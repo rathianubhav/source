@@ -1,3 +1,0 @@
-use io;
-
-io.Println(["Hello World", "Google", "releax"]);

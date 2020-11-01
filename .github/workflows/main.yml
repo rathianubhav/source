@@ -1,0 +1,29 @@
+name: Build Status
+
+# Run this workflow every time a new commit pushed to your repository
+on: 
+  push:
+    paths:
+      - "**.cc"
+      - "**.hh"
+  pull_request:
+     paths:
+       - "**.cc"
+       - "**.hh"
+
+jobs:
+  # Set the job key. The key is displayed as the job name
+  # when a job name is not provided
+  super-lint:
+    # Name the Job
+    name: Source code base
+    # Set the type of machine to run on
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+      - run: pip install meson ninja
+      - run: meson build .

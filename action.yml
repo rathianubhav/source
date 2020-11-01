@@ -1,0 +1,6 @@
+uses: BSFishy/meson-build@v1.0.1
+with:
+  action: test
+  directory: build
+  meson-version: 0.53.2
+  ninja-version: 1.9.0.post1

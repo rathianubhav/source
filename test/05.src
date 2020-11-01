@@ -1,8 +1,0 @@
-let x := 5;
-
-let main := func args {
-    let j := 2;
-    print("Hello World\n",x, args, j);
-};
-
-main(6);
