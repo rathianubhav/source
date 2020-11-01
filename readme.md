@@ -81,37 +81,32 @@ Source will be pre install in [rlxos](https://releax.in/) but can compile in on 
 
 ### Compilation
 ```bash
-    meson build . -DDEBUG
+    meson build . --prefix=/usr
     ninja -C build
 ```
 
 ### Installation
 ``` bash
-    meson build . install
+    ninaj -C build . install
 ```
 
 <!-- USAGE EXAMPLES -->
 ## Usage
 Source use common and standard command line arguments for performing operations, like
 ```bash
-    Source install <app-name>
+    source <file>
 ```
 
 ```bash
-    Source-0.1.0 : rlxos package manager tool
+    Source 0.1.0 
 
-    Usage: Source [options]
+    Usage: Source [options] <file>
 
     Options:
-        install     [app-name] 		        install specified application from app-id
-        info        [app-name] 		        print information of <app>
-        list-files  [app-name] 		        list content of install <app>
-        cal-dep     [app-name] 		        calculate required dependencies of <app>
-        verify-config [section.variable]    print configuration file
-        remove      [app-name] 		        remove app from root directory
-        download    [<url> <file>] 		    download file specified
-        sync        [] 		                sync data from modules
-        gen-hash    [file] 		            generate hash sum of input file
+        lex                   stdout lexer output
+        label                 stdout label of ast
+        --debug               enable full debug
+        --debug-parser        enable debugging messages for parser (DEBUG=full)
 ```
 
 _For more examples, please refer to the [Documentation](https://github.com/itsmanjeet/source/docs/Source.html)_
