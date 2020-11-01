@@ -13,7 +13,7 @@ jobs:
       - run: meson build .
         env:
           CXX: g++
-      - uses: actions/upload-aritfact@v1
+      - uses: actions/upload-aritfact@v2
         if: failure()
         with:
           name: meson_build_log
