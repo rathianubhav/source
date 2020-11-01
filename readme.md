@@ -87,7 +87,7 @@ Source will be pre install in [rlxos](https://releax.in/) but can compile in on 
 
 ### Installation
 ``` bash
-    ninaj -C build . install
+    ninja -C build . install
 ```
 
 <!-- USAGE EXAMPLES -->
