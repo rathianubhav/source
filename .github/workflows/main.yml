@@ -1,9 +1,17 @@
-name: meson build
+name: Super-Linter
+
+# Run this workflow every time a new commit pushed to your repository
 on: push
+
 jobs:
-  meson-build:
+  # Set the job key. The key is displayed as the job name
+  # when a job name is not provided
+  super-lint:
+    # Name the Job
+    name: Lint code base
+    # Set the type of machine to run on
     runs-on: ubuntu-latest
-    container: mesonbuild/eoan:latest
+
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
@@ -11,10 +19,3 @@ jobs:
           python-version: '3.x'
       - run: pip install meson ninja
       - run: meson build .
-        env:
-          CXX: g++
-      - uses: actions/upload-aritfact@v2
-        if: failure()
-        with:
-          name: meson_build_log
-          path: build/meson-logs/build.txt  
